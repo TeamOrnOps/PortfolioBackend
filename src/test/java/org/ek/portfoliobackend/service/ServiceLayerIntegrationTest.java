@@ -9,6 +9,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Integration test to verify that the service layer and repositories are correctly wired in the Spring context.
+ */
+
 @SpringBootTest
 public class ServiceLayerIntegrationTest {
 
