@@ -2,9 +2,9 @@ name: Java CI (Build & Test)
 
 on:
   pull_request:
-    branches: [ develop, main ]
+    branches: [ developer, main ]
   push:
-    branches: [ develop, main ]
+    branches: [ developer, main ]
 
 permissions:
   contents: read
