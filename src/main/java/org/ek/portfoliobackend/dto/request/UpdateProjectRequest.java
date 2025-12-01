@@ -15,8 +15,6 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateProjectRequest {
-
-
     private String title;
     private String description;
     private ServiceCategory serviceCategory; // TODO: Kan vi ændre klassen til at hedde JobTypeCategory i stedet?
