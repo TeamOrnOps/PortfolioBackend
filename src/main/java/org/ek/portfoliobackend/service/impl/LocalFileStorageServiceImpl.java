@@ -65,23 +65,39 @@ public class LocalFileStorageServiceImpl implements ImageStorageService {
 
     @Override
     public void delete(String url) {
+        // 1) Hvis url er null eller tom → gør ingenting og returnér stille
+        if (url == null || url.isBlank()) {
+            return;
+        }
+
+        // 2) Udtræk filnavn fra URL'en
+        //    Hvis url er fx "/uploads/billede.png" → vi vil have "billede.png"
+        int lastSlash = url.lastIndexOf('/');
+        String filename = (lastSlash >= 0) ? url.substring(lastSlash + 1) : url;
+
+        // Hvis der ikke kom et ordentligt filnavn ud af det → gør ingenting
+        if (filename == null || filename.isBlank()) {
+            return;
+        }
+
+        // 3) Byg den fulde sti inde i upload-mappen
+        Path filePath = uploadPath.resolve(filename).normalize();
+
+        // 4) Sikkerhedstjek – må ikke kunne slette udenfor uploadPath
+        if (!filePath.startsWith(uploadPath)) {
+            throw new SecurityException("Cannot delete file outside upload directory");
+        }
+
         try {
-            // Extract filename from URL (e.g., "/uploads/abc-123.jpg" -> "abc-123.jpg")
-            String filename = url.substring(url.lastIndexOf("/") + 1);
-            Path filePath = this.uploadPath.resolve(filename).normalize();
-
-            // Security check: ensure the file is within the upload directory
-            if (!filePath.getParent().equals(this.uploadPath)) {
-                throw new SecurityException("Cannot delete file outside upload directory");
-            }
-
-            // Delete the file if it exists
+            // 5) Slet filen, hvis den findes – ingen exception hvis den ikke findes
             Files.deleteIfExists(filePath);
-
         } catch (IOException e) {
+            // Beholder din oprindelige adfærd her
             throw new RuntimeException("Failed to delete file: " + url, e);
         }
     }
+
+
 
     /**
      * Get the upload directory path (useful for testing or configuration)
