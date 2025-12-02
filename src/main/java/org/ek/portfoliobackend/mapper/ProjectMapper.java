@@ -75,7 +75,7 @@ public class ProjectMapper {
         response.setDescription(project.getDescription());
         response.setExecutionDate(project.getExecutionDate());
         response.setCreationDate(project.getCreationDate());
-        response.setWorkType(project.getServiceCategory());
+        response.setWorkType(project.getWorkType());
         response.setCustomerType(project.getCustomerType());
 
         // Map alle billeder
@@ -102,7 +102,7 @@ public class ProjectMapper {
         }
 
         if (request.getWorkType() != null) {
-            project.setServiceCategory(request.getWorkType());
+            project.setWorkType(request.getWorkType());
         }
 
         if (request.getCustomerType() != null) {

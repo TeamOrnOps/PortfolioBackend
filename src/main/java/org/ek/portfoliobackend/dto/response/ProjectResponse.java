@@ -1,14 +1,10 @@
 package org.ek.portfoliobackend.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
 
-import org.ek.portfoliobackend.model.Project;
+
 import org.ek.portfoliobackend.model.WorkType;
 import org.ek.portfoliobackend.model.CustomerType;
 

@@ -1,8 +1,6 @@
 package org.ek.portfoliobackend.dto.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+
 
 import org.ek.portfoliobackend.model.WorkType;
 import org.ek.portfoliobackend.model.CustomerType;

@@ -1,7 +1,7 @@
 package org.ek.portfoliobackend.dto.request;
 
 
-import lombok.*;
+
 import org.ek.portfoliobackend.model.ImageType;
 
 
