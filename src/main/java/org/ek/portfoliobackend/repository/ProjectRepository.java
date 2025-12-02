@@ -13,13 +13,13 @@ import java.util.List;
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     // Find all projects by service category
-    List<Project> findByServiceCategory(WorkType workType);
+    List<Project> findByWorkType(WorkType workType);
 
     // Find all projects by customer type
     List<Project> findByCustomerType(CustomerType customerType);
 
     // Find all projects by service category and customer type
-    List<Project> findByServiceCategoryAndCustomerType(WorkType workType, CustomerType customerType);
+    List<Project> findByWorkTypeAndCustomerType(WorkType workType, CustomerType customerType);
 
     // Find all projects by execution date between two dates
     List<Project> findByExecutionDateBetween(LocalDate startDate, LocalDate endDate);
@@ -31,7 +31,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findAllByOrderByCreationDateAsc();
 
     // Find projects by service category ordered by creation date descending
-    List<Project> findByServiceCategoryOrderByCreationDateDesc(WorkType workType);
+    List<Project> findByWorkTypeOrderByCreationDateDesc(WorkType workType);
 
     // Find projects by customer type ordered by creation date descending
     List<Project> findByCustomerTypeOrderByCreationDateDesc(CustomerType customerType);

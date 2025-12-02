@@ -5,8 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
@@ -16,13 +16,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for ProjectRepository.
- * 
+ *
  * @DataJpaTest konfigurerer:
  * - H2 in-memory database
  * - Spring Data JPA repositories
  * - TestEntityManager til database setup
  * - Transactional tests (rollback efter hver test)
- * 
+ *
  * @ActiveProfiles("test") sikrer at application-test.properties bruges
  */
 @DataJpaTest
@@ -56,7 +56,7 @@ class ProjectRepositoryTest {
                 "First project created",
                 LocalDate.now().minusDays(10),
                 LocalDate.now().minusDays(10),
-                ServiceCategory.FACADE_CLEANING,
+                WorkType.FACADE_CLEANING,
                 CustomerType.BUSINESS_CUSTOMER
         );
 
@@ -65,7 +65,7 @@ class ProjectRepositoryTest {
                 "Second project created",
                 LocalDate.now().minusDays(5),
                 LocalDate.now().minusDays(5),
-                ServiceCategory.ROOF_CLEANING,
+                WorkType.ROOF_CLEANING,
                 CustomerType.PRIVATE_CUSTOMER
         );
 
@@ -74,7 +74,7 @@ class ProjectRepositoryTest {
                 "Third project created",
                 LocalDate.now(),
                 LocalDate.now(),
-                ServiceCategory.PAVING_CLEANING,
+                WorkType.PAVING_CLEANING,
                 CustomerType.BUSINESS_CUSTOMER
         );
 
@@ -86,7 +86,7 @@ class ProjectRepositoryTest {
 
     /**
      * Test: Verificer at projekter sorteres korrekt med nyeste først.
-     * 
+     *
      * Forventet resultat:
      * - 3 projekter returneres
      * - Nyeste projekt er først i listen
@@ -107,7 +107,7 @@ class ProjectRepositoryTest {
 
     /**
      * Test: Verificer at projekter sorteres korrekt med ældste først.
-     * 
+     *
      * Nyttigt for historisk visning eller arkiv funktionalitet.
      */
     @Test
@@ -125,7 +125,7 @@ class ProjectRepositoryTest {
 
     /**
      * Test: Verificer at tom liste returneres når database er tom.
-     * 
+     *
      * Edge case: Sikrer at query ikke fejler på tom database.
      */
     @Test
@@ -159,7 +159,7 @@ class ProjectRepositoryTest {
 
     /**
      * Test: Verificer at projekter med samme creation date håndteres korrekt.
-     * 
+     *
      * Edge case: Når flere projekter oprettes samme dag.
      */
     @Test
@@ -172,7 +172,7 @@ class ProjectRepositoryTest {
                 "First with same date",
                 today,
                 today,
-                ServiceCategory.WOODEN_DECK_CLEANING,
+                WorkType.WOODEN_DECK_CLEANING,
                 CustomerType.PRIVATE_CUSTOMER
         );
         Project project5 = createProject(
@@ -180,7 +180,7 @@ class ProjectRepositoryTest {
                 "Second with same date",
                 today,
                 today,
-                ServiceCategory.FACADE_CLEANING,
+                WorkType.FACADE_CLEANING,
                 CustomerType.BUSINESS_CUSTOMER
         );
 
@@ -199,7 +199,7 @@ class ProjectRepositoryTest {
 
     /**
      * Test: Verificer at projekt kan gemmes med alle felter korrekt.
-     * 
+     *
      * Tester JPA persistence funktionalitet.
      */
     @Test
@@ -211,7 +211,7 @@ class ProjectRepositoryTest {
                 "Test description",
                 LocalDate.now(),
                 LocalDate.now(),
-                ServiceCategory.ROOF_CLEANING,
+                WorkType.ROOF_CLEANING,
                 CustomerType.PRIVATE_CUSTOMER
         );
 
@@ -223,13 +223,13 @@ class ProjectRepositoryTest {
         assertThat(savedProject.getId()).isNotNull();
         assertThat(savedProject.getTitle()).isEqualTo("New Project");
         assertThat(savedProject.getDescription()).isEqualTo("Test description");
-        assertThat(savedProject.getServiceCategory()).isEqualTo(ServiceCategory.ROOF_CLEANING);
+        assertThat(savedProject.getWorkType()).isEqualTo(WorkType.ROOF_CLEANING);
         assertThat(savedProject.getCustomerType()).isEqualTo(CustomerType.PRIVATE_CUSTOMER);
     }
 
     /**
      * Test: Verificer at projekt kan slettes via ID.
-     * 
+     *
      * Tester delete funktionalitet.
      */
     @Test
@@ -249,18 +249,18 @@ class ProjectRepositoryTest {
 
     /**
      * Helper metode til at oprette test projekter.
-     * 
+     *
      * @return Project entity klar til at gemmes
      */
     private Project createProject(String title, String description,
-                                   LocalDate executionDate, LocalDate creationDate,
-                                   ServiceCategory serviceCategory, CustomerType customerType) {
+                                  LocalDate executionDate, LocalDate creationDate,
+                                  WorkType workType, CustomerType customerType) {
         Project project = new Project();
         project.setTitle(title);
         project.setDescription(description);
         project.setExecutionDate(executionDate);
         project.setCreationDate(creationDate);
-        project.setServiceCategory(serviceCategory);
+        project.setWorkType(workType);
         project.setCustomerType(customerType);
         return project;
     }

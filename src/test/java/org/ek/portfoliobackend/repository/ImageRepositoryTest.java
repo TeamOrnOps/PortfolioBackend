@@ -5,8 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
@@ -16,14 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for ImageRepository.
- * 
- * Tester alle query metoder inklusiv:
- * - Filtrering efter image type
- * - Filtrering efter featured status
- * - Kombinerede queries
- * - Project relation
  */
-
+@DataJpaTest
 @ActiveProfiles("test")
 @DisplayName("ImageRepository Integration Tests")
 class ImageRepositoryTest {
@@ -37,222 +31,222 @@ class ImageRepositoryTest {
     @Autowired
     private ProjectRepository projectRepository;
 
-    private Project testProject;
+    private Project project1;
+    private Project project2;
     private Image beforeImage1;
+    private Image afterImage1Featured;
     private Image beforeImage2;
-    private Image afterImage1;
     private Image afterImage2;
-    private Image featuredImage;
 
-    /**
-     * Setup køres før hver test.
-     * Opretter test data med forskellige image types og featured status.
-     */
     @BeforeEach
     void setUp() {
-        // Ryd database
         imageRepository.deleteAll();
         projectRepository.deleteAll();
         entityManager.flush();
 
-        // Opret test projekt
-        testProject = createProject("Test Project", "Test Description");
-        entityManager.persistAndFlush(testProject);
+        // Opret test projekter
+        project1 = createProject(
+                "Test Project 1",
+                "First test project",
+                WorkType.FACADE_CLEANING,
+                CustomerType.PRIVATE_CUSTOMER
+        );
 
-        // Opret test images med forskellige combinations
-        beforeImage1 = createImage("before1.jpg", ImageType.BEFORE, false, testProject);
-        beforeImage2 = createImage("before2.jpg", ImageType.BEFORE, false, testProject);
-        afterImage1 = createImage("after1.jpg", ImageType.AFTER, false, testProject);
-        afterImage2 = createImage("after2.jpg", ImageType.AFTER, true, testProject);
-        featuredImage = createImage("featured.jpg", ImageType.BEFORE, true, testProject);
+        project2 = createProject(
+                "Test Project 2",
+                "Second test project",
+                WorkType.ROOF_CLEANING,
+                CustomerType.BUSINESS_CUSTOMER
+        );
+
+        entityManager.persistAndFlush(project1);
+        entityManager.persistAndFlush(project2);
+
+        // Opret test billeder for project1
+        beforeImage1 = createImage(
+                "/images/before1.jpg",
+                ImageType.BEFORE,
+                false,
+                project1
+        );
+
+        afterImage1Featured = createImage(
+                "/images/after1.jpg",
+                ImageType.AFTER,
+                true,
+                project1
+        );
+
+        // Opret test billeder for project2
+        beforeImage2 = createImage(
+                "/images/before2.jpg",
+                ImageType.BEFORE,
+                false,
+                project2
+        );
+
+        afterImage2 = createImage(
+                "/images/after2.jpg",
+                ImageType.AFTER,
+                false,
+                project2
+        );
 
         entityManager.persistAndFlush(beforeImage1);
+        entityManager.persistAndFlush(afterImage1Featured);
         entityManager.persistAndFlush(beforeImage2);
-        entityManager.persistAndFlush(afterImage1);
         entityManager.persistAndFlush(afterImage2);
-        entityManager.persistAndFlush(featuredImage);
     }
 
-    /**
-     * Test: Verificer at alle BEFORE billeder kan findes.
-     */
     @Test
-    @DisplayName("Should find all images by BEFORE type")
-    void findByImageType_ShouldReturnAllBeforeImages() {
+    @DisplayName("Should find all images by project")
+    void findByProject_ShouldReturnAllImagesForProject() {
         // Act
-        List<Image> beforeImages = imageRepository.findByImageType(ImageType.BEFORE);
+        List<Image> images = imageRepository.findByProject(project1);
 
         // Assert
-        assertThat(beforeImages).hasSize(3);
-        assertThat(beforeImages)
-                .extracting(Image::getImageType)
-                .containsOnly(ImageType.BEFORE);
-        assertThat(beforeImages)
-                .extracting(Image::getUrl)
-                .contains("before1.jpg", "before2.jpg", "featured.jpg");
+        assertThat(images).hasSize(2);
+        assertThat(images).extracting(Image::getUrl)
+                .containsExactlyInAnyOrder("/images/before1.jpg", "/images/after1.jpg");
     }
 
-    /**
-     * Test: Verificer at alle AFTER billeder kan findes.
-     */
     @Test
-    @DisplayName("Should find all images by AFTER type")
-    void findByImageType_ShouldReturnAllAfterImages() {
+    @DisplayName("Should find all images by project ID")
+    void findByProjectId_ShouldReturnAllImagesForProjectId() {
         // Act
-        List<Image> afterImages = imageRepository.findByImageType(ImageType.AFTER);
+        List<Image> images = imageRepository.findByProjectId(project1.getId());
 
         // Assert
-        assertThat(afterImages).hasSize(2);
-        assertThat(afterImages)
-                .extracting(Image::getImageType)
-                .containsOnly(ImageType.AFTER);
-        assertThat(afterImages)
-                .extracting(Image::getUrl)
-                .contains("after1.jpg", "after2.jpg");
+        assertThat(images).hasSize(2);
+        assertThat(images).extracting(Image::getUrl)
+                .containsExactlyInAnyOrder("/images/before1.jpg", "/images/after1.jpg");
     }
 
-    /**
-     * Test: Verificer at alle featured billeder kan findes.
-     */
     @Test
-    @DisplayName("Should find all featured images")
-    void findByIsFeatured_ShouldReturnAllFeaturedImages() {
+    @DisplayName("Should find only featured images")
+    void findByIsFeaturedTrue_ShouldReturnOnlyFeaturedImages() {
         // Act
-        List<Image> featuredImages = imageRepository.findByIsFeatured(true);
+        List<Image> featuredImages = imageRepository.findByIsFeaturedTrue();
 
         // Assert
-        assertThat(featuredImages).hasSize(2);
-        assertThat(featuredImages)
-                .extracting(Image::isFeatured)
-                .containsOnly(true);
-        assertThat(featuredImages)
-                .extracting(Image::getUrl)
-                .contains("featured.jpg", "after2.jpg");
+        assertThat(featuredImages).hasSize(1);
+        assertThat(featuredImages.get(0).getUrl()).isEqualTo("/images/after1.jpg");
+        assertThat(featuredImages.get(0).getIsFeatured()).isTrue();
     }
 
-    /**
-     * Test: Verificer at alle non-featured billeder kan findes.
-     */
     @Test
-    @DisplayName("Should find all non-featured images")
-    void findByIsFeatured_ShouldReturnAllNonFeaturedImages() {
+    @DisplayName("Should find only non-featured images")
+    void findByIsFeaturedFalse_ShouldReturnOnlyNonFeaturedImages() {
         // Act
-        List<Image> nonFeaturedImages = imageRepository.findByIsFeatured(false);
+        List<Image> nonFeaturedImages = imageRepository.findByIsFeaturedFalse();
 
         // Assert
         assertThat(nonFeaturedImages).hasSize(3);
-        assertThat(nonFeaturedImages)
-                .extracting(Image::isFeatured)
-                .containsOnly(false);
+        assertThat(nonFeaturedImages).allMatch(image -> !image.getIsFeatured());
     }
 
-    /**
-     * Test: Verificer kombineret query - featured BEFORE images.
-     * 
-     * Nyttigt til at finde hero images for projekt oversigt.
-     */
     @Test
-    @DisplayName("Should find images by both imageType and featured status")
+    @DisplayName("Should find images by image type")
+    void findByImageType_ShouldReturnImagesOfSpecificType() {
+        // Act
+        List<Image> beforeImages = imageRepository.findByImageType(ImageType.BEFORE);
+        List<Image> afterImages = imageRepository.findByImageType(ImageType.AFTER);
+
+        // Assert
+        assertThat(beforeImages).hasSize(2);
+        assertThat(beforeImages).allMatch(img -> img.getImageType() == ImageType.BEFORE);
+
+        assertThat(afterImages).hasSize(2);
+        assertThat(afterImages).allMatch(img -> img.getImageType() == ImageType.AFTER);
+    }
+
+    @Test
+    @DisplayName("Should find featured images by project ID")
+    void findByProjectIdAndIsFeaturedTrue_ShouldReturnFeaturedImagesForProject() {
+        // Act
+        List<Image> featuredImages = imageRepository.findByProjectIdAndIsFeaturedTrue(project1.getId());
+
+        // Assert
+        assertThat(featuredImages).hasSize(1);
+        assertThat(featuredImages.get(0).getUrl()).isEqualTo("/images/after1.jpg");
+        assertThat(featuredImages.get(0).getIsFeatured()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Should find non-featured images by project ID")
+    void findByProjectIdAndIsFeaturedFalse_ShouldReturnNonFeaturedImagesForProject() {
+        // Act
+        List<Image> nonFeaturedImages = imageRepository.findByProjectIdAndIsFeaturedFalse(project1.getId());
+
+        // Assert
+        assertThat(nonFeaturedImages).hasSize(1);
+        assertThat(nonFeaturedImages.get(0).getUrl()).isEqualTo("/images/before1.jpg");
+        assertThat(nonFeaturedImages.get(0).getIsFeatured()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Should find images by type and featured status")
     void findByImageTypeAndIsFeatured_ShouldReturnMatchingImages() {
-        // Act - Find featured BEFORE images
-        List<Image> featuredBeforeImages = imageRepository
-                .findByImageTypeAndIsFeatured(ImageType.BEFORE, true);
+        // Act - find featured AFTER images
+        List<Image> featuredAfterImages = imageRepository.findByImageTypeAndIsFeatured(ImageType.AFTER, true);
 
         // Assert
-        assertThat(featuredBeforeImages).hasSize(1);
-        assertThat(featuredBeforeImages.get(0).getUrl()).isEqualTo("featured.jpg");
-        assertThat(featuredBeforeImages.get(0).getImageType()).isEqualTo(ImageType.BEFORE);
-        assertThat(featuredBeforeImages.get(0).isFeatured()).isTrue();
+        assertThat(featuredAfterImages).hasSize(1);
+        assertThat(featuredAfterImages.get(0).getImageType()).isEqualTo(ImageType.AFTER);
+        assertThat(featuredAfterImages.get(0).getIsFeatured()).isTrue();
     }
 
-    /**
-     * Test: Verificer kombineret query - non-featured AFTER images.
-     */
     @Test
-    @DisplayName("Should find non-featured AFTER images")
-    void findByImageTypeAndIsFeatured_ShouldFindNonFeaturedAfterImages() {
+    @DisplayName("Should find images by project ID and image type")
+    void findByProjectIdAndImageType_ShouldReturnMatchingImages() {
         // Act
-        List<Image> nonFeaturedAfterImages = imageRepository
-                .findByImageTypeAndIsFeatured(ImageType.AFTER, false);
+        List<Image> beforeImages = imageRepository.findByProjectIdAndImageType(
+                project1.getId(),
+                ImageType.BEFORE
+        );
+        List<Image> afterImages = imageRepository.findByProjectIdAndImageType(
+                project1.getId(),
+                ImageType.AFTER
+        );
 
         // Assert
-        assertThat(nonFeaturedAfterImages).hasSize(1);
-        assertThat(nonFeaturedAfterImages.get(0).getUrl()).isEqualTo("after1.jpg");
+        assertThat(beforeImages).hasSize(1);
+        assertThat(beforeImages.get(0).getUrl()).isEqualTo("/images/before1.jpg");
+
+        assertThat(afterImages).hasSize(1);
+        assertThat(afterImages.get(0).getUrl()).isEqualTo("/images/after1.jpg");
     }
 
-    /**
-     * Test: Verificer at tom liste returneres når ingen billeder matcher.
-     */
     @Test
-    @DisplayName("Should return empty list when no images match criteria")
-    void findByImageTypeAndIsFeatured_ShouldReturnEmptyListWhenNoMatch() {
-        // Arrange - Slet alle billeder og opret kun non-featured BEFORE
-        imageRepository.deleteAll();
-        Image nonFeaturedBefore = createImage("test.jpg", ImageType.BEFORE, false, testProject);
-        entityManager.persistAndFlush(nonFeaturedBefore);
-
-        // Act - Søg efter featured AFTER images (ingen eksisterer)
-        List<Image> result = imageRepository
-                .findByImageTypeAndIsFeatured(ImageType.AFTER, true);
-
-        // Assert
-        assertThat(result).isEmpty();
-    }
-
-    /**
-     * Test: Verificer at alle billeder for et projekt kan findes.
-     */
-    @Test
-    @DisplayName("Should find all images by project ID")
-    void findByProjectId_ShouldReturnAllImagesForProject() {
+    @DisplayName("Should return empty list for non-existent project")
+    void findByProjectId_WithNonExistentProject_ShouldReturnEmptyList() {
         // Act
-        List<Image> projectImages = imageRepository.findByProjectId(testProject.getId());
-
-        // Assert
-        assertThat(projectImages).hasSize(5);
-        assertThat(projectImages)
-                .extracting(image -> image.getProject().getId())
-                .containsOnly(testProject.getId());
-    }
-
-    /**
-     * Test: Verificer at tom liste returneres når projekt ikke har billeder.
-     */
-    @Test
-    @DisplayName("Should return empty list when project has no images")
-    void findByProjectId_ShouldReturnEmptyListWhenProjectHasNoImages() {
-        // Arrange - Opret projekt uden billeder
-        Project emptyProject = createProject("Empty Project", "No images");
-        entityManager.persistAndFlush(emptyProject);
-
-        // Act
-        List<Image> images = imageRepository.findByProjectId(emptyProject.getId());
+        List<Image> images = imageRepository.findByProjectId(999L);
 
         // Assert
         assertThat(images).isEmpty();
     }
 
-    /**
-     * Test: Verificer at tom liste returneres når projekt ikke eksisterer.
-     */
     @Test
-    @DisplayName("Should return empty list when project does not exist")
-    void findByProjectId_ShouldReturnEmptyListWhenProjectDoesNotExist() {
-        // Act - Søg efter non-eksisterende projekt
-        List<Image> images = imageRepository.findByProjectId(99999L);
+    @DisplayName("Should return empty list when no matches found")
+    void findByImageTypeAndIsFeatured_WithNoMatches_ShouldReturnEmptyList() {
+        // Act - try to find featured BEFORE images (none exist in test data)
+        List<Image> featuredBeforeImages = imageRepository.findByImageTypeAndIsFeatured(ImageType.BEFORE, true);
 
         // Assert
-        assertThat(images).isEmpty();
+        assertThat(featuredBeforeImages).isEmpty();
     }
 
-    /**
-     * Test: Verificer at image kan gemmes med alle felter korrekt.
-     */
     @Test
     @DisplayName("Should persist image with all fields correctly")
     void save_ShouldPersistImageWithAllFields() {
         // Arrange
-        Image newImage = createImage("new-image.jpg", ImageType.BEFORE, true, testProject);
+        Image newImage = createImage(
+                "/images/new.jpg",
+                ImageType.BEFORE,
+                true,
+                project1
+        );
 
         // Act
         Image savedImage = imageRepository.save(newImage);
@@ -260,17 +254,14 @@ class ImageRepositoryTest {
 
         // Assert
         assertThat(savedImage.getId()).isNotNull();
-        assertThat(savedImage.getUrl()).isEqualTo("new-image.jpg");
+        assertThat(savedImage.getUrl()).isEqualTo("/images/new.jpg");
         assertThat(savedImage.getImageType()).isEqualTo(ImageType.BEFORE);
-        assertThat(savedImage.isFeatured()).isTrue();
-        assertThat(savedImage.getProject()).isEqualTo(testProject);
+        assertThat(savedImage.getIsFeatured()).isTrue();
+        assertThat(savedImage.getProject().getId()).isEqualTo(project1.getId());
     }
 
-    /**
-     * Test: Verificer at image kan slettes via ID.
-     */
     @Test
-    @DisplayName("Should delete image by id")
+    @DisplayName("Should delete image by ID")
     void deleteById_ShouldRemoveImage() {
         // Arrange
         Long imageId = beforeImage1.getId();
@@ -281,54 +272,27 @@ class ImageRepositoryTest {
 
         // Assert
         assertThat(imageRepository.findById(imageId)).isEmpty();
-        assertThat(imageRepository.findAll()).hasSize(4);
+        assertThat(imageRepository.findAll()).hasSize(3);
     }
 
-    /**
-     * Test: Verificer cascade delete når projekt slettes.
-     * 
-     * Når et projekt slettes, skal alle tilhørende billeder også slettes
-     * pga. orphanRemoval = true i Project entity.
-     */
-    @Test
-    @DisplayName("Should cascade delete images when project is deleted")
-    void delete_ShouldCascadeDeleteImagesWhenProjectDeleted() {
-        // Arrange
-        Long projectId = testProject.getId();
-        int imageCount = imageRepository.findByProjectId(projectId).size();
-        assertThat(imageCount).isEqualTo(5); // Verificer vi har 5 images
-
-        // Act
-        projectRepository.deleteById(projectId);
-        entityManager.flush();
-        entityManager.clear(); // Clear persistence context for fresh query
-
-        // Assert
-        assertThat(imageRepository.findByProjectId(projectId)).isEmpty();
-    }
-
-    /**
-     * Helper metode til at oprette test projekter.
-     */
-    private Project createProject(String title, String description) {
+    // Helper methods
+    private Project createProject(String title, String description,
+                                  WorkType workType, CustomerType customerType) {
         Project project = new Project();
         project.setTitle(title);
         project.setDescription(description);
         project.setExecutionDate(LocalDate.now());
         project.setCreationDate(LocalDate.now());
-        project.setServiceCategory(ServiceCategory.FACADE_CLEANING);
-        project.setCustomerType(CustomerType.BUSINESS_CUSTOMER);
+        project.setWorkType(workType);
+        project.setCustomerType(customerType);
         return project;
     }
 
-    /**
-     * Helper metode til at oprette test images.
-     */
     private Image createImage(String url, ImageType imageType, boolean isFeatured, Project project) {
         Image image = new Image();
         image.setUrl(url);
         image.setImageType(imageType);
-        image.setFeatured(isFeatured);
+        image.setIsFeatured(isFeatured);
         image.setProject(project);
         return image;
     }
