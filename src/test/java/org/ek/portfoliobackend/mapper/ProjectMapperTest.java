@@ -181,7 +181,7 @@ class ProjectMapperTest {
         assertThat(image).isNotNull();
         assertThat(image.getUrl()).isEqualTo(imageUrl);
         assertThat(image.getImageType()).isEqualTo(ImageType.BEFORE);
-        assertThat(image.isFeatured()).isTrue();
+        assertThat(image.getIsFeatured()).isTrue();
         assertThat(image.getProject()).isEqualTo(project);  // Relation er etableret
     }
 
@@ -208,7 +208,7 @@ class ProjectMapperTest {
         );
 
         // Assert - Verificer at billedet IKKE er featured
-        assertThat(image.isFeatured()).isFalse();
+        assertThat(image.getIsFeatured()).isFalse();
         assertThat(image.getImageType()).isEqualTo(ImageType.AFTER);
     }
 
