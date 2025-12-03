@@ -1,9 +1,11 @@
 package org.ek.portfoliobackend.controller;
 
+import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
 import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
 import tools.jackson.databind.ObjectMapper;
 import org.ek.portfoliobackend.dto.request.CreateProjectRequest;
 import org.ek.portfoliobackend.dto.request.ImageUploadRequest;
+import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
 import org.ek.portfoliobackend.dto.response.ImageResponse;
 import org.ek.portfoliobackend.dto.response.ProjectResponse;
 import org.ek.portfoliobackend.model.CustomerType;
@@ -27,6 +29,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -578,6 +581,45 @@ class ProjectControllerTest {
                             return request;
                         })
                         .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/projects/{projectId}/images/{imageId} - Success")
+    void updateImageMetadata_Success() throws Exception {
+        // Arrange
+        UpdateImageRequest request = new UpdateImageRequest();
+        request.setImageType(ImageType.AFTER);
+        request.setIsFeatured(true);
+
+        ProjectResponse response = new ProjectResponse();
+        response.setId(1L);
+
+        when(projectService.updateImageMetadata(eq(1L), eq(1L), any(UpdateImageRequest.class)))
+                .thenReturn(response);
+
+        // Act & Assert
+        mockMvc.perform(patch("/api/projects/1/images/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/projects/{projectId}/images/{imageId} - Image Not Found")
+    void updateImageMetadata_ImageNotFound() throws Exception {
+        // Arrange
+        UpdateImageRequest request = new UpdateImageRequest();
+        request.setImageType(ImageType.AFTER);
+
+        when(projectService.updateImageMetadata(eq(1L), eq(999L), any(UpdateImageRequest.class)))
+                .thenThrow(new ResourceNotFoundException("Image", 999L));
+
+        // Act & Assert
+        mockMvc.perform(patch("/api/projects/1/images/999")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound());
     }
 }

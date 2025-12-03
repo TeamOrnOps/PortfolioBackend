@@ -2,6 +2,7 @@ package org.ek.portfoliobackend.service;
 
 import org.ek.portfoliobackend.dto.request.CreateProjectRequest;
 import org.ek.portfoliobackend.dto.request.ImageUploadRequest;
+import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
 import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
 import org.ek.portfoliobackend.dto.response.ProjectResponse;
 import org.ek.portfoliobackend.model.CustomerType;
@@ -46,8 +47,9 @@ public interface ProjectService {
     List<ProjectResponse> getAllProjectsOrderedByDate();
 
     //add images to existing project
-    ProjectResponse addImagesToProject(Long projectId,
-                                       List<MultipartFile> images,
-                                       List<ImageUploadRequest> imageMetadata);
+    ProjectResponse addImagesToProject(Long projectId, List<MultipartFile> images, List<ImageUploadRequest> imageMetadata);
+
+    //update image metadata for existing image in project
+    ProjectResponse updateImageMetadata(Long projectId, Long imageId, UpdateImageRequest request);
 
 }

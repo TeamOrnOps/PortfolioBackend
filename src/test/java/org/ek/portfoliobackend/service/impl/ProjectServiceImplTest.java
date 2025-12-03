@@ -2,6 +2,7 @@ package org.ek.portfoliobackend.service.impl;
 
 import org.ek.portfoliobackend.dto.request.CreateProjectRequest;
 import org.ek.portfoliobackend.dto.request.ImageUploadRequest;
+import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
 import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
 import org.ek.portfoliobackend.dto.response.ProjectResponse;
 import org.ek.portfoliobackend.mapper.ProjectMapper;
@@ -607,5 +608,51 @@ class ProjectServiceImplTest {
         // Act & Assert
         assertThrows(ResourceNotFoundException.class,
                 () -> projectService.addImagesToProject(999L, images, metadata));
+    }
+
+    @Test
+    @DisplayName("updateImageMetadata - Success")
+    void updateImageMetadata_Success() {
+        // Arrange
+        Project project = new Project();
+        project.setId(1L);
+
+        Image image = new Image();
+        image.setId(1L);
+        image.setProject(project);
+
+        UpdateImageRequest request = new UpdateImageRequest();
+        request.setImageType(ImageType.AFTER);
+        request.setIsFeatured(true);
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(imageRepository.findById(1L)).thenReturn(Optional.of(image));
+        when(imageRepository.save(any())).thenReturn(image);
+        when(projectMapper.toResponse(any())).thenReturn(new ProjectResponse());
+
+        // Act
+        ProjectResponse result = projectService.updateImageMetadata(1L, 10L, request);
+
+        // Assert
+        assertNotNull(result);
+        verify(projectMapper).updateImageEntity(request, image);
+        verify(imageRepository).save(image);
+    }
+
+    @Test
+    @DisplayName("updateImageMetadata - Image Not Found")
+    void updateImageMetadata_ImageNotFound() {
+        // Arrange
+        Project project = new Project();
+        project.setId(1L);
+
+        UpdateImageRequest request = new UpdateImageRequest();
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(imageRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class,
+                () -> projectService.updateImageMetadata(1L, 999L, request));
     }
 }

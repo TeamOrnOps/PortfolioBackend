@@ -2,6 +2,7 @@ package org.ek.portfoliobackend.service.impl;
 
 import org.ek.portfoliobackend.dto.request.CreateProjectRequest;
 import org.ek.portfoliobackend.dto.request.ImageUploadRequest;
+import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
 import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
 import org.ek.portfoliobackend.dto.response.ProjectResponse;
 import org.ek.portfoliobackend.mapper.ProjectMapper;
@@ -259,5 +260,31 @@ public class ProjectServiceImpl implements ProjectService {
             }
             throw new RuntimeException("Failed to store images: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    @Transactional
+    public ProjectResponse updateImageMetadata(Long projectId, Long imageId, UpdateImageRequest request) {
+        // Verify project exists
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
+
+        // Find the image within the project
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Image", imageId));
+
+        // Verify image belongs to this project
+        if (!image.getProject().getId().equals(projectId)) {
+            throw new IllegalArgumentException("Image does not belong to the specified project");
+        }
+
+        // Update image metadata using mapper
+        projectMapper.updateImageEntity(request, image);
+
+        // Save updated image
+        imageRepository.save(image);
+
+        // Return updated project
+        return projectMapper.toResponse(project);
     }
 }

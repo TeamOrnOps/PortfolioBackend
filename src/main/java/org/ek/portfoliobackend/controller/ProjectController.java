@@ -3,6 +3,7 @@ package org.ek.portfoliobackend.controller;
 import jakarta.validation.Valid;
 import org.ek.portfoliobackend.dto.request.CreateProjectRequest;
 import org.ek.portfoliobackend.dto.request.ImageUploadRequest;
+import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
 import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
 import org.ek.portfoliobackend.dto.response.ProjectResponse;
 import org.ek.portfoliobackend.service.ProjectService;
@@ -157,6 +158,28 @@ public class ProjectController {
                     "Failed to upload images due to internal error. Please try again later."
             );
         }
+    }
+
+    /**
+     * Updates metadata of an existing image within a project.
+     * only updates the fields provided in the request (imageType, isFeatured).
+     *
+     * @param projectId Project ID
+     * @param imageId Image ID of image to update
+     * @param request Metadata fields to update (imageType, isFeatured)
+     * @return ResponseEntity with the updated project and HTTP 200 status
+     * @throws ResourceNotFoundException if project or image not found
+     * */
+    @PatchMapping("/{projectId}/images/{imageId}")
+    public ResponseEntity<ProjectResponse> updateImageMetadata(@PathVariable Long projectId,
+                                                       @PathVariable Long imageId,
+                                                       @Valid @RequestBody UpdateImageRequest request) {
+        log.info("Received request to update image metadata for image ID: {} in project ID: {}", imageId, projectId);
+
+        ProjectResponse updatedProject = projectService.updateImageMetadata(projectId, imageId, request);
+
+        log.info("Successfully updated image metadata");
+        return ResponseEntity.ok(updatedProject);
     }
 
     @PutMapping("/{id}")
