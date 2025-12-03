@@ -11,6 +11,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.stream.Collectors;
 
 @Component
 public class ProjectMapper {
@@ -52,16 +53,6 @@ public class ProjectMapper {
         image.setProject(project);
 
         return image;
-    }
-
-    // Konverterer image til responseDTO
-    public ImageResponse toImageResponse(Image image) {
-        ImageResponse response = new ImageResponse();
-        response.setId(image.getId());
-        response.setUrl(image.getUrl());
-        response.setImageType(image.getImageType());
-        response.setIsFeatured(image.getIsFeatured());
-        return response;
     }
 
 
@@ -134,4 +125,48 @@ public class ProjectMapper {
 
 
 
+
+    /**
+     * Konverterer Project entity til ProjectResponse DTO.
+     * Inkluderer alle projekt felter og mapper images til response format.
+     *
+     * @param project Project entity fra databasen
+     * @return ProjectResponse DTO til API response
+     */
+    public ProjectResponse toResponse(Project project) {
+        ProjectResponse response = new ProjectResponse();
+        response.setId(project.getId());
+        response.setTitle(project.getTitle());
+        response.setDescription(project.getDescription());
+        response.setCreationDate(project.getCreationDate());
+        response.setExecutionDate(project.getExecutionDate());
+        response.setWorkType(project.getWorkType());
+        response.setCustomerType(project.getCustomerType());
+
+        // Map images if present
+        if (project.getImages() != null && !project.getImages().isEmpty()) {
+            response.setImages(
+                    project.getImages().stream()
+                            .map(this::toImageResponse)
+                            .collect(Collectors.toList())
+            );
+        }
+
+        return response;
+    }
+
+    /**
+     * Konverterer Image entity til ImageResponse DTO.
+     *
+     * @param image Image entity fra databasen
+     * @return ImageResponse DTO
+     */
+    private ImageResponse toImageResponse(Image image) {
+        ImageResponse response = new ImageResponse();
+        response.setId(image.getId());
+        response.setUrl(image.getUrl());
+        response.setImageType(image.getImageType());
+        response.setIsFeatured(image.getIsFeatured());
+        return response;
+    }
 }
