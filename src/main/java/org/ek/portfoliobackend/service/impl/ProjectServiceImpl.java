@@ -102,8 +102,20 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
     public ProjectResponse updateProject(Long id, UpdateProjectRequest request) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        // Find existing project
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
+
+        // Update project fields with mapper
+        projectMapper.updateProjectEntity(request, project);
+
+        // Save updated project
+        Project updatedProject = projectRepository.save(project);
+
+        // return response DTO
+        return projectMapper.toResponse(updatedProject);
     }
 
     @Override

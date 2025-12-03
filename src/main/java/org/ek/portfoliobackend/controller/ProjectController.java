@@ -1,7 +1,9 @@
 package org.ek.portfoliobackend.controller;
 
+import jakarta.validation.Valid;
 import org.ek.portfoliobackend.dto.request.CreateProjectRequest;
 import org.ek.portfoliobackend.dto.request.ImageUploadRequest;
+import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
 import org.ek.portfoliobackend.dto.response.ProjectResponse;
 import org.ek.portfoliobackend.service.ProjectService;
 import lombok.extern.slf4j.Slf4j;
@@ -104,5 +106,17 @@ public class ProjectController {
                     "Failed to create project due to internal error. Please try again later."
             );
         }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProjectResponse> updateProject(@PathVariable Long id,
+                                                        @Valid @RequestBody UpdateProjectRequest request) {
+        log.info("Received request to update project with ID: {}", id);
+        log.debug("Update details - Title: {}, Description: {}", request.getTitle(), request.getDescription());
+
+        ProjectResponse updatedProject = projectService.updateProject(id, request);
+
+        log.info("Successfully updated project with ID: {}", id);
+        return ResponseEntity.ok(updatedProject);
     }
 }

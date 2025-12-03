@@ -320,13 +320,97 @@ class ProjectServiceImplTest {
     // ========================================
 
     @Test
-    void updateProject_throwsUnsupportedOperationException() {
-        UpdateProjectRequest request = new UpdateProjectRequest();
+    @DisplayName("updateProject - success with full update")
+    void updateProject_WithValidData_ReturnsUpdatedProject() {
+        // Arrange
+        UpdateProjectRequest updateRequest = new UpdateProjectRequest();
+        updateRequest.setTitle("Updated Project Title");
+        updateRequest.setDescription("Updated Project Description");
+        updateRequest.setExecutionDate(LocalDate.of(2025, 5, 20));
+        updateRequest.setWorkType(WorkType.PAVING_CLEANING);
+        updateRequest.setCustomerType(CustomerType.BUSINESS_CUSTOMER);
 
-        assertThatThrownBy(() -> projectService.updateProject(1L, request))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessage("Not implemented yet");
+        Project existingProject = new Project();
+        existingProject.setId(1L);
+        existingProject.setTitle("Original Title");
+        existingProject.setDescription("Original Description");
+
+
+        Project updatedProject = new Project();
+        updatedProject.setId(1L);
+        updatedProject.setTitle("Updated Project Title");
+        updatedProject.setDescription("Updated Project Description");
+
+
+        ProjectResponse response = new ProjectResponse();
+        response.setId(1L);
+        response.setTitle("Updated Project Title");
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(existingProject));
+        when(projectRepository.save(any(Project.class))).thenReturn(updatedProject);
+        when(projectMapper.toResponse(updatedProject)).thenReturn(response);
+
+        // Act
+        ProjectResponse result = projectService.updateProject(1L, updateRequest);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("Updated Project Title", result.getTitle());
+        verify(projectRepository).findById(1L);
+        verify(projectMapper).updateProjectEntity(updateRequest, existingProject);
+        verify(projectRepository).save(any(Project.class));
+        verify(projectMapper).toResponse(updatedProject);
     }
+
+    @Test
+    @DisplayName("updateProject - success with partial update")
+    void updateProject_WithPartialData_ReturnsUpdatedProject() {
+        // Arrange
+        UpdateProjectRequest request = new UpdateProjectRequest();
+        request.setTitle("new title only");
+
+        Project existingProject = new Project();
+        existingProject.setId(1L);
+        existingProject.setTitle("old title");
+        existingProject.setDescription("old description");
+
+        ProjectResponse response = new ProjectResponse();
+        response.setId(1L);
+        response.setTitle("new title only");
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(existingProject));
+        when(projectRepository.save(any(Project.class))).thenReturn(existingProject);
+        when(projectMapper.toResponse(existingProject)).thenReturn(response);
+
+        // Act
+        ProjectResponse result = projectService.updateProject(1L, request);
+
+        // Assert
+        assertNotNull(result);
+        verify(projectMapper).updateProjectEntity(request, existingProject);
+        verify(projectRepository).save(existingProject);
+    }
+
+    @Test
+    @DisplayName("updateProject - throws ResourceNotFoundException when project not found")
+    void updateProject_WithInvalidId_ThrowsResourceNotFoundException() {
+        // Arrange
+        UpdateProjectRequest request = new UpdateProjectRequest();
+        request.setTitle("new title");
+
+        when(projectRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class,
+                () -> projectService.updateProject(999L, request),
+                "Expected ResourceNotFoundException when project not found");
+
+        verify(projectRepository).findById(999L);
+        verify(projectMapper, never()).updateProjectEntity(any(), any());
+        verify(projectRepository, never()).save(any());
+    }
+
 
     @Test
     @DisplayName("getProjectById - success")

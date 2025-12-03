@@ -1,5 +1,6 @@
 package org.ek.portfoliobackend.controller;
 
+import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
 import tools.jackson.databind.ObjectMapper;
 import org.ek.portfoliobackend.dto.request.CreateProjectRequest;
 import org.ek.portfoliobackend.dto.request.ImageUploadRequest;
@@ -26,8 +27,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
@@ -435,5 +435,81 @@ class ProjectControllerTest {
                         .file(metadataPart)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    @DisplayName("PUT /api/projects/{id} - Success with full update")
+    void updateProject_WithValidData_ReturnsUpdatedProject() throws Exception {
+        // Arrange
+        UpdateProjectRequest request = new UpdateProjectRequest();
+        request.setTitle("Updated Title");
+        request.setDescription("Updated Description");
+        request.setWorkType(WorkType.ROOF_CLEANING);
+        request.setCustomerType(CustomerType.PRIVATE_CUSTOMER);
+        request.setExecutionDate(LocalDate.of(2025, 10, 31));
+
+        ProjectResponse response = new ProjectResponse();
+        response.setId(1L);
+        response.setTitle("Updated Title");
+        response.setDescription("Updated Description");
+        response.setWorkType(WorkType.ROOF_CLEANING);
+        response.setCustomerType(CustomerType.PRIVATE_CUSTOMER);
+        response.setExecutionDate(LocalDate.of(2025, 10, 31));
+
+        when(projectService.updateProject(eq(1L), any(UpdateProjectRequest.class)))
+                .thenReturn(response);
+
+        // Act & Assert
+        mockMvc.perform(put("/api/projects/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.title").value("Updated Title"))
+                .andExpect(jsonPath("$.description").value("Updated Description"))
+                .andExpect(jsonPath("$.workType").value("ROOF_CLEANING"))
+                .andExpect(jsonPath("$.customerType").value("PRIVATE_CUSTOMER"));
+    }
+
+    @Test
+    @DisplayName("PUT /api/projects/{id} - Success with partial update")
+    void updateProject_WithPartialData_ReturnsUpdatedProject() throws Exception {
+        // Arrange
+        UpdateProjectRequest request = new UpdateProjectRequest();
+        request.setTitle("New title only");
+
+        ProjectResponse response = new ProjectResponse();
+        response.setId(1L);
+        response.setTitle("New title only");
+        response.setDescription("OG Description");
+        response.setWorkType(WorkType.FACADE_CLEANING);
+
+        when(projectService.updateProject(eq(1L), any(UpdateProjectRequest.class)))
+                .thenReturn(response);
+
+        // Act & Assert
+        mockMvc.perform(put("/api/projects/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.title").value("New title only"))
+    }
+
+    @Test
+    @DisplayName("PUT /api/projects/{id} - Not Found")
+    void updateProject_WithInvalidId_ReturnsNotFound() throws Exception {
+        // Arrange
+        UpdateProjectRequest request = new UpdateProjectRequest();
+        request.setTitle("Updated Title");
+
+        when(projectService.updateProject(eq(999L), any(UpdateProjectRequest.class)))
+                .thenThrow(new ResourceNotFoundException("Project", 999L));
+
+        // Act & Assert
+        mockMvc.perform(put("/api/projects/999")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound());
     }
 }
