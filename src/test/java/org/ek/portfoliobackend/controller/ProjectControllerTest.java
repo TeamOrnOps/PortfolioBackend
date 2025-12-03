@@ -29,7 +29,6 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -620,6 +619,34 @@ class ProjectControllerTest {
         mockMvc.perform(patch("/api/projects/1/images/999")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("DELETE /api/projects/{projectId}/images/{imageId} - Success")
+    void deleteImage_WithValidIds_ReturnsOk() throws Exception {
+        // Arrange
+        ProjectResponse response = new ProjectResponse();
+        response.setId(1L);
+
+        when(projectService.deleteImageFromProject(eq(1L), eq(1L)))
+                .thenReturn(response);
+
+        // Act & Assert
+        mockMvc.perform(delete("/api/projects/1/images/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+    }
+
+    @Test
+    @DisplayName("DELETE /api/projects/{projectId}/images/{imageId} - Image Not Found")
+    void deleteImage_ImageNotFound_ReturnsNotFound() throws Exception {
+        // Arrange
+        when(projectService.deleteImageFromProject(eq(1L), eq(999L)))
+                .thenThrow(new ResourceNotFoundException("Image", 999L));
+
+        // Act & Assert
+        mockMvc.perform(delete("/api/projects/1/images/999"))
                 .andExpect(status().isNotFound());
     }
 }

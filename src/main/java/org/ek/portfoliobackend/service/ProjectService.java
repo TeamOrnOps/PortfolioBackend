@@ -52,4 +52,6 @@ public interface ProjectService {
     //update image metadata for existing image in project
     ProjectResponse updateImageMetadata(Long projectId, Long imageId, UpdateImageRequest request);
 
+    //remove image from project
+    ProjectResponse deleteImageFromProject(Long projectId, Long imageId);
 }

@@ -182,6 +182,7 @@ public class ProjectController {
         return ResponseEntity.ok(updatedProject);
     }
 
+    // Updates an existing project's details
     @PutMapping("/{id}")
     public ResponseEntity<ProjectResponse> updateProject(@PathVariable Long id,
                                                         @Valid @RequestBody UpdateProjectRequest request) {
@@ -192,5 +193,31 @@ public class ProjectController {
 
         log.info("Successfully updated project with ID: {}", id);
         return ResponseEntity.ok(updatedProject);
+    }
+
+    // Deletes an image from a project by image ID
+    @DeleteMapping("/{projectId}/images/{imageId}")
+    public ResponseEntity<ProjectResponse> deleteImage(@PathVariable Long projectId,
+                                                   @PathVariable Long imageId) {
+        log.info("Received request to delete image ID: {} from project ID: {}", imageId, projectId);
+
+        try {
+            ProjectResponse updatedProject = projectService.deleteImageFromProject(projectId, imageId);
+            log.info("Successfully deleted image ID: {} from project ID: {}", imageId, projectId);
+            return ResponseEntity.ok(updatedProject);
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Validation error while deleting image ID {} from project ID {}: {}", imageId, projectId, e.getMessage());
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Validation failed: " + e.getMessage()
+            );
+        } catch (Exception e) {
+            log.error("Failed to delete image ID {} from project ID {}: {}", imageId, projectId, e.getMessage(), e);
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to delete image due to internal error. Please try again later."
+            );
+        }
     }
 }

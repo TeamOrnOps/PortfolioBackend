@@ -287,4 +287,57 @@ public class ProjectServiceImpl implements ProjectService {
         // Return updated project
         return projectMapper.toResponse(project);
     }
+
+    @Override
+    @Transactional
+    public ProjectResponse deleteImageFromProject(Long projectId, Long imageId) {
+        // Verify project exists
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
+
+        // find the image
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Image", imageId));
+
+        // Verify image belongs to this project
+        if (!image.getProject().getId().equals(projectId)) {
+            throw new IllegalArgumentException("Image does not belong to the specified project");
+        }
+
+        validateImageDeletion(project, image);
+
+        // delete physical file from storage
+        try {
+            imageStorageService.delete(image.getUrl());
+        } catch (Exception e) {
+
+        }
+
+        // remove image from project and delete from db
+        project.getImages().remove(image);
+        imageRepository.delete(image);
+
+        return projectMapper.toResponse(project);
+    }
+    /**
+     * Validate that deleting the image will not violate business rules
+     */
+    private void validateImageDeletion(Project project, Image imageToDelete) {
+        long beforeCount = project.getImages().stream()
+                .filter(img -> img.getImageType() == ImageType.BEFORE)
+                .filter(img -> !img.getId().equals(imageToDelete.getId()))
+                .count();
+
+        long afterCount = project.getImages().stream()
+                .filter(img -> img.getImageType() == ImageType.AFTER)
+                .filter(img -> !img.getId().equals(imageToDelete.getId()))
+                .count();
+
+        if (beforeCount < 1) {
+            throw new IllegalArgumentException("Cannot delete the last BEFORE image of the project");
+        }
+        if (afterCount < 1) {
+            throw new IllegalArgumentException("Cannot delete the last AFTER image of the project");
+        }
+    }
 }

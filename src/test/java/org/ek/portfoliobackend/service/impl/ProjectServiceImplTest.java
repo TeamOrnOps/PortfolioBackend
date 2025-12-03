@@ -655,4 +655,65 @@ class ProjectServiceImplTest {
         assertThrows(ResourceNotFoundException.class,
                 () -> projectService.updateImageMetadata(1L, 999L, request));
     }
+
+    @Test
+    @DisplayName("deleteImageFromProject - Success")
+    void deleteImageFromProject_Success() {
+        // Arrange
+        Project project = new Project();
+        project.setId(1L);
+
+        Image beforeImage1 = new Image();
+        beforeImage1.setId(1L);
+        beforeImage1.setImageType(ImageType.BEFORE);
+        beforeImage1.setUrl("/uploads/before1.jpg");
+        beforeImage1.setProject(project);
+
+        Image beforeImage2 = new Image();
+        beforeImage2.setId(2L);
+        beforeImage2.setImageType(ImageType.BEFORE);
+        beforeImage2.setUrl("/uploads/before2.jpg");
+        beforeImage2.setProject(project);
+
+        Image afterImage = new Image();
+        afterImage.setId(3L);
+        afterImage.setImageType(ImageType.AFTER);
+        afterImage.setUrl("/uploads/after.jpg");
+        afterImage.setProject(project);
+
+        List<Image> images = new ArrayList<>();
+        images.add(beforeImage1);
+        images.add(beforeImage2);
+        images.add(afterImage);
+        project.setImages(images);
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(imageRepository.findById(2L)).thenReturn(Optional.of(beforeImage2));
+        when(projectMapper.toResponse(project)).thenReturn(new ProjectResponse());
+
+        // Act
+        ProjectResponse result = projectService.deleteImageFromProject(1L, 2L);
+
+        // Assert
+        assertNotNull(result);
+        verify(imageStorageService).delete("/uploads/before2.jpg");
+        verify(imageRepository).delete(beforeImage2);
+    }
+
+    @Test
+    @DisplayName("deleteImageFromProject - Image Not Found")
+    void deleteImageFromProject_ImageNotFound() {
+        // Arrange
+        Project project = new Project();
+        project.setId(1L);
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(imageRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class,
+                () -> projectService.deleteImageFromProject(1L, 999L));
+
+        verify(imageRepository, never()).delete(any());
+    }
 }
