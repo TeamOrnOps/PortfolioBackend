@@ -9,31 +9,56 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
-* Standard fejlrespons format, som returneres til frontend ved alle fejl.
-* Indeholder tracking ID, timestamp, HTTP status, fejlbesked og request path
-*/
+ * Standard fejlresponse format som returneres til frontend ved alle HTTP fejl.
+
+ * Indeholder tracking ID til at spore fejl i logs, timestamp, HTTP status,
+ * fejlbesked, request path og optionelle feltspecifikke valideringsfejl.
+
+ * @JsonInclude sikrer at null felter ikke inkluderes i JSON response.
+ */
 
 @Getter
 @JsonInclude(JsonInclude.Include.NON_NULL) // Skjuler null felter
 public class ErrorResponse {
 
-    private final String trackingId;
-    private final LocalDateTime timestamp;
-    private final int status;
-    private final String error;
-    private final String message;
-    private final String path;
+    private final String trackingId;         // Unikt ID til at tracke fejlen i logs
+    private final LocalDateTime timestamp;   // Tidspunkt for fejlen
+    private final int status;                // HTTP status code (404, 400, 500, etc.)
+    private final String error;              // HTTP status tekst ("Not Found", "Bad Request")
+    private final String message;            // Brugervenlig fejlbesked
+    private final String path;               // API endpoint hvor fejlen skete
 
+    /**
+     * Feltspecifikke valideringsfejl (fieldName -> errorMessage).
+
+     * Sættes kun ved Bean Validation fejl fra @Valid annotation.
+     * Gør det muligt for frontend at matche fejlbeskeder til specifikke input felter.
+
+     * Eksempel: {"name": "må ikke være tomt", "billeder": "skal have før og efter"}
+
+     * Null ved andre fejltyper og ekskluderes automatisk fra JSON response.
+     * @see GlobalExceptionHandler#handleMethodArgumentValidException
+     */
     @Setter
-    Map<String, String> validationErrors;
+    private Map<String, String> validationErrors;
 
+
+    /**
+     * Constructor til at oprette en ErrorResponse.
+     * Genererer automatisk tracking ID og timestamp.
+
+     * @param status HTTP status code
+     * @param error HTTP status tekst
+     * @param message Brugervenlig fejlbesked
+     * @param path API endpoint hvor fejlen skete
+     */
     public ErrorResponse(int status, String error, String message, String path) {
-        this.trackingId = UUID.randomUUID().toString(); // Unikt ID til at tracke fejlen i logs
-        this.timestamp = LocalDateTime.now();           // Tidspunkt for fejlen
-        this.status = status;                           // HTTP status kode (404, 500, etc.)
-        this.error = error;                             // HTTP fejl tekst ("Not found", "Bad Request")
-        this.message = message;                         // Brugervenlig fejlbesked
-        this.path = path;                               // API endpoint hvor fejlen skete
+        this.trackingId = UUID.randomUUID().toString();
+        this.timestamp = LocalDateTime.now();
+        this.status = status;
+        this.error = error;
+        this.message = message;
+        this.path = path;
     }
 
 }
