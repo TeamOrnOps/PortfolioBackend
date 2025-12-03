@@ -9,6 +9,7 @@ import org.ek.portfoliobackend.model.CustomerType;
 import org.ek.portfoliobackend.model.ImageType;
 import org.ek.portfoliobackend.model.WorkType;
 import org.ek.portfoliobackend.service.ProjectService;
+import org.ek.portfoliobackend.exception.custom.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
@@ -106,6 +108,44 @@ class ProjectControllerTest {
                                 .build()
                 ))
                 .build();
+    }
+
+    @Test
+    @DisplayName("GET /api/projects/{id} - Success")
+    void getProjectById_WithValidId_ReturnsProject() throws Exception {
+        // Arrange
+        ProjectResponse response = new ProjectResponse();
+        response.setId(1L);
+        response.setTitle("Test Project");
+        response.setDescription("Test Description");
+        response.setExecutionDate(LocalDate.of(2025, 4, 1));
+        response.setCreationDate(LocalDate.now());
+        response.setWorkType(WorkType.FACADE_CLEANING);
+        response.setCustomerType(CustomerType.BUSINESS_CUSTOMER);
+        response.setImages(List.of());
+
+        when(projectService.getProjectById(1L)).thenReturn(response);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/projects/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.title").value("Test Project"))
+                .andExpect(jsonPath("$.description").value("Test Description"))
+                .andExpect(jsonPath("$.workType").value("FACADE_CLEANING"))
+                .andExpect(jsonPath("$.customerType").value("BUSINESS_CUSTOMER"));
+    }
+
+    @Test
+    @DisplayName("GET /api/projects/{id} - Not Found")
+    void getProjectById_WithInvalidId_ReturnsNotFound() throws Exception {
+        // Arrange
+        when(projectService.getProjectById(999L))
+                .thenThrow(new ResourceNotFoundException("Project", 999L));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/projects/999"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

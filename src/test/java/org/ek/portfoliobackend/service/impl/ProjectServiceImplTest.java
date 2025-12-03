@@ -9,7 +9,9 @@ import org.ek.portfoliobackend.model.*;
 import org.ek.portfoliobackend.repository.ImageRepository;
 import org.ek.portfoliobackend.repository.ProjectRepository;
 import org.ek.portfoliobackend.service.ImageStorageService;
+import org.ek.portfoliobackend.exception.custom.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -22,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
@@ -326,11 +329,53 @@ class ProjectServiceImplTest {
     }
 
     @Test
-    void getProjectById_throwsUnsupportedOperationException() {
-        assertThatThrownBy(() -> projectService.getProjectById(1L))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessage("Not implemented yet");
+    @DisplayName("getProjectById - success")
+    void getProjectById_WithValidId_ReturnsProjectResponse() {
+        // Arrange
+        Project mockProject = new Project();
+        mockProject.setId(1L);
+        mockProject.setTitle("Test Project");
+        mockProject.setDescription("Test Description");
+        mockProject.setCreationDate(LocalDate.now());
+        mockProject.setExecutionDate(LocalDate.of(2025, 1, 4));
+        mockProject.setWorkType(WorkType.FACADE_CLEANING);
+        mockProject.setCustomerType(CustomerType.PRIVATE_CUSTOMER);
+
+        ProjectResponse mockResponse = new ProjectResponse();
+        mockResponse.setId(1L);
+        mockResponse.setTitle("Test Project");
+        mockResponse.setDescription("Test Description");
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(mockProject));
+        when(projectMapper.toResponse(mockProject)).thenReturn(mockResponse);
+
+        // Act
+        ProjectResponse result = projectService.getProjectById(1L);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("Test Project", result.getTitle());
+        verify(projectRepository).findById(1L);
+        verify(projectMapper).toResponse(mockProject);
     }
+
+    @Test
+    @DisplayName("getProjectById - throws ResourceNotFoundException when project not found")
+    void getProjectById_WithInvalidId_ThrowsResourceNotFoundException() {
+        // Arrange
+        when(projectRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+                () -> projectService.getProjectById(999L));
+
+        assertTrue(exception.getMessage().contains("Project"));
+        assertTrue(exception.getMessage().contains("999"));
+        verify(projectRepository).findById(999L);
+        verify(projectMapper, never()).toResponse(any());
+    }
+
 
     @Test
     void getAllProjects_throwsUnsupportedOperationException() {

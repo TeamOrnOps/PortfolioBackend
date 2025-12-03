@@ -14,6 +14,7 @@ import org.ek.portfoliobackend.repository.ImageRepository;
 import org.ek.portfoliobackend.repository.ProjectRepository;
 import org.ek.portfoliobackend.service.ImageStorageService;
 import org.ek.portfoliobackend.service.ProjectService;
+import org.ek.portfoliobackend.exception.custom.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -107,7 +108,9 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public ProjectResponse getProjectById(Long id) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
+        return projectMapper.toResponse(project);
     }
 
     @Override

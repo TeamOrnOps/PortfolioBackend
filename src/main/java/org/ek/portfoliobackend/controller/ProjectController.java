@@ -30,6 +30,15 @@ public class ProjectController {
         this.projectService = projectService;
     }
 
+
+    // Retrieves a project by its ID (images included).
+    @GetMapping("/{id}")
+    public ResponseEntity<ProjectResponse> getProjectById(@PathVariable Long id) {
+        ProjectResponse response = projectService.getProjectById(id);
+        log.info("Fetched project with ID: {}", id);
+        return ResponseEntity.ok(response);
+    }
+
     /**
      * Creates a new project with multiple images and metadata.
      *
