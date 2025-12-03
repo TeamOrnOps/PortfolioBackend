@@ -208,4 +208,56 @@ public class ProjectServiceImpl implements ProjectService {
             throw new IllegalArgumentException("At least one AFTER image must be provided");
         }
     }
+
+    @Override
+    @Transactional
+    public ProjectResponse addImagesToProject(Long projectId,
+                                              List<MultipartFile> images,
+                                              List<ImageUploadRequest> imageMetadata) {
+        // Validate inputs
+        validateInputs(images, imageMetadata);
+        // Find existing project
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
+
+        // store and create new image entities
+        List<Image> newImages = new ArrayList<>();
+        try {
+            for (int i = 0; i < images.size(); i++) {
+                MultipartFile imageFile = images.get(i);
+                ImageUploadRequest metadata = imageMetadata.get(i);
+
+                // Store the image file and get the URL
+                String imageUrl = imageStorageService.store(imageFile);
+
+                // Create image entity
+                Image image = projectMapper.toImage(
+                        imageUrl,
+                        metadata.getImageType(),
+                        metadata.isFeatured(),
+                        project
+                );
+
+                // Save image entity
+                Image savedImage = imageRepository.save(image);
+                newImages.add(savedImage);
+            }
+
+            // Add new images to project
+            project.getImages().addAll(newImages);
+
+            // convert to response DTO
+            return projectMapper.toResponse(project);
+        } catch (Exception e) {
+            // Cleanup stored images on failure
+            for (Image savedImage : newImages) {
+                try {
+                    imageStorageService.delete(savedImage.getUrl());
+                } catch (Exception cleanupException) {
+                    // Log cleanup failure but don't throw
+                }
+            }
+            throw new RuntimeException("Failed to store images: " + e.getMessage(), e);
+        }
+    }
 }

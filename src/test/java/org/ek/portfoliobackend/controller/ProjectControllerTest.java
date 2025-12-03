@@ -493,7 +493,7 @@ class ProjectControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.title").value("New title only"))
+                .andExpect(jsonPath("$.title").value("New title only"));
     }
 
     @Test
@@ -510,6 +510,74 @@ class ProjectControllerTest {
         mockMvc.perform(put("/api/projects/999")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/projects/{id}/images - Success")
+    void uploadProjectImages_WithValidData_ReturnsOk() throws Exception {
+        // Arrange
+        MockMultipartFile image = new MockMultipartFile(
+                "images", "image.jpg", MediaType.IMAGE_JPEG_VALUE, "image content".getBytes()
+        );
+
+        List<ImageUploadRequest> metadata = List.of(
+                new ImageUploadRequest(ImageType.BEFORE, false)
+        );
+
+        ProjectResponse response = new ProjectResponse();
+        response.setId(1L);
+
+        when(projectService.addImagesToProject(eq(1L), anyList(), anyList()))
+                .thenReturn(response);
+
+        MockMultipartFile metadataPart = new MockMultipartFile(
+                "imageMetadata", "", MediaType.APPLICATION_JSON_VALUE,
+                objectMapper.writeValueAsBytes(metadata)
+        );
+
+        // Act & Assert
+        mockMvc.perform(multipart("/api/projects/1/images")
+                        .file(image)
+                        .file(metadataPart)
+                        .with(request -> {
+                            request.setMethod("PATCH");
+                            return request;
+                        })
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/projects/{id}/images - Not Found")
+    void uploadProjectImages_ProjectNotFound_ReturnsNotFound() throws Exception {
+        // Arrange
+        MockMultipartFile image = new MockMultipartFile(
+                "images", "image.jpg", MediaType.IMAGE_JPEG_VALUE, "image content".getBytes()
+        );
+
+        List<ImageUploadRequest> metadata = List.of(
+                new ImageUploadRequest(ImageType.BEFORE, false)
+        );
+
+        when(projectService.addImagesToProject(eq(999L), anyList(), anyList()))
+                .thenThrow(new ResourceNotFoundException("Project", 999L));
+
+        MockMultipartFile metadataPart = new MockMultipartFile(
+                "imageMetadata", "", MediaType.APPLICATION_JSON_VALUE,
+                objectMapper.writeValueAsBytes(metadata)
+        );
+
+        // Act & Assert
+        mockMvc.perform(multipart("/api/projects/999/images")
+                        .file(image)
+                        .file(metadataPart)
+                        .with(request -> {
+                            request.setMethod("PATCH");
+                            return request;
+                        })
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isNotFound());
     }
 }

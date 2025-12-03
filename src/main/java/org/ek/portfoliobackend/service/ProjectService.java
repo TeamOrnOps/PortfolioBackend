@@ -45,4 +45,9 @@ public interface ProjectService {
     //get all projects ordered by creation date (newest first)
     List<ProjectResponse> getAllProjectsOrderedByDate();
 
+    //add images to existing project
+    ProjectResponse addImagesToProject(Long projectId,
+                                       List<MultipartFile> images,
+                                       List<ImageUploadRequest> imageMetadata);
+
 }

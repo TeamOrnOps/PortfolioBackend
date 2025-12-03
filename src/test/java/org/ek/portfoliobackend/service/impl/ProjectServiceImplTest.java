@@ -559,4 +559,53 @@ class ProjectServiceImplTest {
                 .isInstanceOf(UnsupportedOperationException.class)
                 .hasMessage("Not implemented yet");
     }
+
+    @Test
+    @DisplayName("addImagesToProject - Success")
+    void addImagesToProject_Success() {
+        // Arrange
+        Project project = new Project();
+        project.setId(1L);
+        project.setImages(new ArrayList<>());
+
+        List<MultipartFile> images = List.of(
+                new MockMultipartFile("img", "img.jpg", "image/jpeg", "content".getBytes())
+        );
+
+        List<ImageUploadRequest> metadata = List.of(
+                new ImageUploadRequest(ImageType.BEFORE, false)
+        );
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(imageStorageService.store(any())).thenReturn("/uploads/img.jpg");
+        when(projectMapper.toImage(anyString(), any(), anyBoolean(), any())).thenReturn(new Image());
+        when(imageRepository.save(any())).thenReturn(new Image());
+        when(projectMapper.toResponse(any())).thenReturn(new ProjectResponse());
+
+        // Act
+        ProjectResponse result = projectService.addImagesToProject(1L, images, metadata);
+
+        // Assert
+        assertNotNull(result);
+        verify(imageRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("addImagesToProject - Project Not Found")
+    void addImagesToProject_ProjectNotFound_ThrowsException() {
+        // Arrange
+        when(projectRepository.findById(999L)).thenReturn(Optional.empty());
+
+        List<MultipartFile> images = List.of(
+                new MockMultipartFile("img", "img.jpg", "image/jpeg", "content".getBytes())
+        );
+
+        List<ImageUploadRequest> metadata = List.of(
+                new ImageUploadRequest(ImageType.BEFORE, false)
+        );
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class,
+                () -> projectService.addImagesToProject(999L, images, metadata));
+    }
 }

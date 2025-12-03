@@ -108,6 +108,57 @@ public class ProjectController {
         }
     }
 
+    /**
+     * Uploads new images to existing project.
+     * new images are added to project's existing images.
+     * validates that project maintains at least one BEFORE and one AFTER image.
+     *
+     * @param id Project ID
+     * @param images List of image files to upload
+     * @param imageMetadata Metadata for each image (imageType, isFeatured)
+     * @return ResponseEntity with the updated project and HTTP 200 status
+     * * @throws ResourceNotFoundException if project with given ID does not exist
+     * @throws IllegalArgumentException with BAD_REQUEST if validation fails
+     * */
+    @PatchMapping(value = "/{id}/images", consumes = "multipart/form-data")
+    public ResponseEntity<ProjectResponse> uploadProjectImages(
+            @PathVariable Long id,
+            @RequestPart("images") List<MultipartFile> images,
+            @RequestPart("imageMetadata") List<ImageUploadRequest> imageMetadata) {
+        log.info("Received request to upload images for project ID: {}", id);
+
+        try {
+            // Validate image and metadata list sizes match
+            if (images.size() != imageMetadata.size()) {
+                String errorMsg = String.format(
+                        "Mismatch between images (%d) and metadata (%d) count",
+                        images.size(), imageMetadata.size()
+                );
+                log.warn(errorMsg);
+                throw new IllegalArgumentException(errorMsg);
+            }
+
+            ProjectResponse updatedProject = projectService.addImagesToProject(id, images, imageMetadata);
+
+            log.info("Successfully uploaded {} images to project ID: {}", images.size(), id);
+            return ResponseEntity.ok(updatedProject);
+
+        } catch (IllegalArgumentException e) {
+            // Validation errors (missing before/after images, invalid data)
+            log.warn("Validation error while uploading images to project ID {}: {}", id, e.getMessage());
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Validation failed: " + e.getMessage()
+            );
+        } catch (Exception e) {
+            log.error("Failed to upload images to project ID {}: {}", id, e.getMessage(), e);
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to upload images due to internal error. Please try again later."
+            );
+        }
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<ProjectResponse> updateProject(@PathVariable Long id,
                                                         @Valid @RequestBody UpdateProjectRequest request) {
