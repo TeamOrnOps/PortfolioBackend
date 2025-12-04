@@ -306,6 +306,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         List<Project> projects = projectRepository.findAll(sort);
 
+
         return projects.stream()
                 .map(projectMapper::toResponse)
                 .toList();
