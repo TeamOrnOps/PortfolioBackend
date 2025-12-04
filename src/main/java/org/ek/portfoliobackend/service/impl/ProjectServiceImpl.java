@@ -18,6 +18,7 @@ import org.ek.portfoliobackend.service.ImageStorageService;
 import org.ek.portfoliobackend.service.ProjectService;
 import org.hibernate.annotations.NotFound;
 import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -182,8 +183,17 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public List<ProjectResponse> getAllProjectsOrderedByDate() {
-        throw new UnsupportedOperationException("Not implemented yet");
+    public List<ProjectResponse> getAllProjectsOrderedByDate(String sortDirection) {
+
+        Sort sort = sortByDate(sortDirection);
+
+        List<Project> projects = projectRepository.findAll(sort);
+
+        return projects.stream()
+                .map(projectMapper::toResponse)
+                .toList();
+
+
     }
 
     // --- Helpers for create project ---
@@ -260,7 +270,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
     }
-    // --- Method for delete project ---
+    // --- Helper for delete project ---
 
     private void deleteAllImages(Project project) {
 
@@ -269,6 +279,17 @@ public class ProjectServiceImpl implements ProjectService {
                 imageStorageService.delete(image.getUrl());
             }
         }
+    }
+
+    // --- Helper for sort by date ---
+    private Sort sortByDate(String sortDirection) {
+
+        if (sortDirection != null && sortDirection.equalsIgnoreCase("asc")) {
+            return Sort.by(Sort.Direction.ASC, "creationDate");
+        }
+
+        // Default sort is the latest project first
+        return Sort.by(Sort.Direction.DESC, "creationDate");
     }
 
 }
