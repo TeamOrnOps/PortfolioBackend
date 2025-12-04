@@ -7,6 +7,8 @@ import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
 import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
 import org.ek.portfoliobackend.dto.response.ProjectResponse;
 import org.ek.portfoliobackend.exception.custom.ResourceNotFoundException;
+import org.ek.portfoliobackend.model.CustomerType;
+import org.ek.portfoliobackend.model.WorkType;
 import org.ek.portfoliobackend.service.ProjectService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -43,12 +45,17 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
-    // retrieves all projects (images included)
+    // Retrieves all projects with optional filtering by workType and customerType.
     @GetMapping
-    public ResponseEntity<List<ProjectResponse>> getAllProjects() {
-        log.info("Received request to fetch all projects");
-        List<ProjectResponse> projects = projectService.getAllProjects();
-        log.info("Successfully retrieved {} projects", projects.size());
+    public ResponseEntity<List<ProjectResponse>> getAllProjects(
+            @RequestParam(required = false) WorkType workType,
+            @RequestParam(required = false)CustomerType customerType) {
+
+        log.info("Received request to fetch projects - workType: {}, customerType: {}", workType, customerType);
+
+        List<ProjectResponse> projects = projectService.getProjectsByFilters(workType, customerType);
+
+        log.info("Successfully retrieved {} projects with applied filters", projects.size());
         return ResponseEntity.ok(projects);
     }
 
