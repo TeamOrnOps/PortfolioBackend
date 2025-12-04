@@ -1,8 +1,10 @@
 package org.ek.portfoliobackend.exception;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -41,6 +43,27 @@ public class ErrorResponse {
      */
     @Setter
     private Map<String, String> validationErrors;
+
+    /**
+     * Ekstra information om fejlen (valgfri).
+     *
+     * Bruges til at give yderligere kontekst om fejlen, f.eks.:
+     * - Tilladte enum værdier ved invalid parameter
+     * - Liste af manglende felter
+     * - Andre metadata der kan hjælpe med at forstå fejlen
+     *
+     * Eksempel ved invalid enum:
+     * {
+     *   "parameter": "workType",
+     *   "invalidValue": "INVALID_TYPE",
+     *   "allowedValues": "PAVING_CLEANING, WOODEN_DECK_CLEANING, ..."
+     * }
+     *
+     * Null ved fejl uden ekstra information og ekskluderes automatisk fra JSON response.
+     * @see GlobalExceptionHandler#handleMethodArgumentTypeMismatch
+     */
+    @Setter
+    private Map<String, Object> additionalInfo;
 
 
     /**

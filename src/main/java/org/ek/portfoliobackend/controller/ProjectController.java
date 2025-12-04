@@ -7,8 +7,11 @@ import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
 import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
 import org.ek.portfoliobackend.dto.response.ProjectResponse;
 import org.ek.portfoliobackend.exception.custom.ResourceNotFoundException;
+import org.ek.portfoliobackend.model.CustomerType;
+import org.ek.portfoliobackend.model.WorkType;
 import org.ek.portfoliobackend.service.ProjectService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,16 +45,20 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
-    // retrieves all projects (images included)
+    // Retrieves all projects with optional filtering and sorting, by workType and customerType.
     @GetMapping
     public ResponseEntity<List<ProjectResponse>> getAllProjects(
-            @RequestParam(name = "sort", required = false) String sortDirection) {
+            @RequestParam(required = false) WorkType workType,
+            @RequestParam(required = false)CustomerType customerType,
+            @RequestParam(name = "sort", required = false)
+            String sortDirection) {
 
-        log.info("Received request to fetch all projects with sort direction '{}'", sortDirection);
+        log.info("Received request to fetch projects - workType: {}, customerType: {}, sort {}",
+                workType, customerType, sortDirection);
 
-        List<ProjectResponse> projects = projectService.getAllProjectsOrderedByDate(sortDirection);
+        List<ProjectResponse> projects = projectService.getProjectsByFilters(workType, customerType, sortDirection);
 
-        log.info("Successfully retrieved {} projects", projects.size());
+        log.info("Successfully retrieved {} projects with applied filters and sorting", projects.size());
         return ResponseEntity.ok(projects);
     }
 

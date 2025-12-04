@@ -151,11 +151,16 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public List<ProjectResponse> getAllProjects() {
-        List<Project> projects = projectRepository.findAll();
-        return projects.stream()
-                .map(projectMapper::toResponse)
-                .toList();
+        return getProjectsByFilters(null, null, null);
+
+        // TODO: slet hvis det virker
+//        List<Project> projects = projectRepository.findAll();
+//        return projects.stream()
+//                .map(projectMapper::toResponse)
+//                .toList();
+
     }
+
     @Override
     @Transactional
     public ProjectResponse addImagesToProject(Long projectId,
@@ -288,21 +293,7 @@ public class ProjectServiceImpl implements ProjectService {
         projectRepository.delete(project);
     }
 
-    @Override
-    public List<ProjectResponse> getProjectsByServiceCategory(WorkType workType) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public List<ProjectResponse> getProjectsByCustomerType(CustomerType customerType) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public List<ProjectResponse> getProjectsByFilters(WorkType workType, CustomerType customerType) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
+    // TODO: Er dette noget vi skal bruge til noget, ellers skal den vel slettes? :) Kan ikke se noget task på den.
     @Override
     public List<ProjectResponse> getProjectsByDateRange(LocalDate startDate, LocalDate endDate) {
         throw new UnsupportedOperationException("Not implemented yet");
@@ -447,6 +438,55 @@ public class ProjectServiceImpl implements ProjectService {
         if (afterCount < 1) {
             throw new IllegalArgumentException("Cannot delete the last AFTER image of the project");
         }
+    }
+
+
+    // ==== FILTRERINGSLOGIK ===
+
+    // TODO: Implementer metoder
+
+    @Override
+    public List<ProjectResponse> getProjectsByWorkType(WorkType workType) {
+        List<Project> projects = projectRepository.findByWorkType(workType);
+
+        return projects.stream()
+                .map(projectMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<ProjectResponse> getProjectsByCustomerType(CustomerType customerType) {
+        List<Project> projects = projectRepository.findByCustomerType(customerType);
+
+        return projects.stream()
+                .map(projectMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<ProjectResponse> getProjectsByFilters(WorkType workType, CustomerType customerType, String sortDirection) {
+        List<Project> projects;
+
+        // Build Sort object
+        Sort sort = sortByDate(sortDirection);
+
+        if (workType != null && customerType != null) {
+            // Both filters with sorting
+            projects = projectRepository.findByWorkTypeAndCustomerType(workType, customerType, sort);
+        } else if (workType != null) {
+            // Only workType filter with sorting
+            projects = projectRepository.findByWorkType(workType, sort);
+        } else if (customerType != null) {
+            // Only customerType with sorting
+            projects = projectRepository.findByCustomerType(customerType, sort);
+        } else {
+            // No filters - just sorting
+            projects = projectRepository.findAll(sort);
+        }
+
+        return projects.stream()
+                .map(projectMapper::toResponse)
+                .toList();
     }
 
 

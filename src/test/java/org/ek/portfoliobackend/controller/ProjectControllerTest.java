@@ -164,7 +164,7 @@ class ProjectControllerTest {
 
         // Arrange
         List<ProjectResponse> mockList = List.of(expectedResponse);
-        when(projectService.getAllProjectsOrderedByDate(null))
+        when(projectService.getProjectsByFilters(null, null, null))
                 .thenReturn(mockList);
 
         // Act
@@ -173,7 +173,7 @@ class ProjectControllerTest {
                 .andExpect(status().isOk());
 
         // Assert
-        verify(projectService).getAllProjectsOrderedByDate(null);
+        verify(projectService).getProjectsByFilters(null, null, null);
     }
 
     @Test
@@ -182,7 +182,7 @@ class ProjectControllerTest {
 
         // Arrange
         List<ProjectResponse> mockList = List.of(expectedResponse);
-        when(projectService.getAllProjectsOrderedByDate("asc"))
+        when(projectService.getProjectsByFilters(null, null, "asc"))
                 .thenReturn(mockList);
 
         // Act
@@ -192,7 +192,7 @@ class ProjectControllerTest {
                 .andExpect(status().isOk());
 
         // Assert
-        verify(projectService).getAllProjectsOrderedByDate("asc");
+        verify(projectService).getProjectsByFilters(null, null, "asc");
     }
 
     @Test

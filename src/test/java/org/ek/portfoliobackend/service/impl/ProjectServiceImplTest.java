@@ -12,6 +12,7 @@ import org.ek.portfoliobackend.repository.ImageRepository;
 import org.ek.portfoliobackend.repository.ProjectRepository;
 import org.ek.portfoliobackend.service.ImageStorageService;
 import org.ek.portfoliobackend.exception.custom.ResourceNotFoundException;
+import org.ek.portfoliobackend.service.ProjectService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -678,7 +681,7 @@ TDD test for old update image method
         response2.setId(2L);
         response2.setTitle("Project 2");
 
-        when(projectRepository.findAll()).thenReturn(List.of(project1, project2));
+        when(projectRepository.findAll(any(Sort.class))).thenReturn(List.of(project1, project2));
         when(projectMapper.toResponse(project1)).thenReturn(response1);
         when(projectMapper.toResponse(project2)).thenReturn(response2);
 
@@ -690,7 +693,7 @@ TDD test for old update image method
         assertEquals(2, result.size());
         assertEquals(1L, result.get(0).getId());
         assertEquals(2L, result.get(1).getId());
-        verify(projectRepository).findAll();
+        verify(projectRepository).findAll(any(Sort.class));
         verify(projectMapper).toResponse(project1);
         verify(projectMapper).toResponse(project2);
     }
@@ -699,7 +702,7 @@ TDD test for old update image method
     @DisplayName("getAllProjects - returns empty list when no projects exist")
     void getAllProjects_NoProjectsExist_ReturnsEmptyList() {
         // Arrange
-        when(projectRepository.findAll()).thenReturn(Collections.emptyList());
+        when(projectRepository.findAll(any(Sort.class))).thenReturn(Collections.emptyList());
 
         // Act
         List<ProjectResponse> result = projectService.getAllProjects();
@@ -707,34 +710,165 @@ TDD test for old update image method
         // Assert
         assertNotNull(result);
         assertTrue(result.isEmpty());
-        verify(projectRepository).findAll();
+        verify(projectRepository).findAll(any(Sort.class));
         verify(projectMapper, never()).toResponse(any());
     }
 
-
-
     @Test
-    void getProjectsByServiceCategory_throwsUnsupportedOperationException() {
-        assertThatThrownBy(() -> projectService.getProjectsByServiceCategory(WorkType.PAVING_CLEANING))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessage("Not implemented yet");
+    @DisplayName("getProjectsByWorkType - calls repository and maps results when filtering by work type")
+    void getProjectsByWorkType_shouldCallRepositoryAndMapResults() {
+        // Arrange
+        WorkType workType = WorkType.PAVING_CLEANING;
+        List<Project> mockProjects = List.of(new Project(), new Project());
+        when(projectRepository.findByWorkType(workType)).thenReturn(mockProjects);
+
+        // Act
+        List<ProjectResponse> result = projectService.getProjectsByWorkType(workType);
+
+        // Assert
+        verify(projectRepository).findByWorkType(workType);
+        assertThat(result).hasSize(2);
     }
 
     @Test
-    void getProjectsByCustomerType_throwsUnsupportedOperationException() {
-        assertThatThrownBy(() -> projectService.getProjectsByCustomerType(CustomerType.PRIVATE_CUSTOMER))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessage("Not implemented yet");
+    @DisplayName("getProjectsByWorkType - returns empty list when no projects match work type filter")
+    void getProjectsByWorkType_shouldReturnEmptyListWhenNoProjectsFound() {
+        // Arrange
+        WorkType workType = WorkType.ROOF_CLEANING;
+        when(projectRepository.findByWorkType(workType)).thenReturn(Collections.emptyList());
+
+        // Act
+        List<ProjectResponse> result = projectService.getProjectsByWorkType(workType);
+
+        // Assert
+        verify(projectRepository).findByWorkType(workType);
+        assertThat(result).isEmpty();
     }
 
     @Test
-    void getProjectsByFilters_throwsUnsupportedOperationException() {
-        assertThatThrownBy(() -> projectService.getProjectsByFilters(
-                WorkType.PAVING_CLEANING, CustomerType.PRIVATE_CUSTOMER))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessage("Not implemented yet");
+    @DisplayName("getProjectsByCustomerType - calls repository and maps results when filtering by customer type")
+    void getProjectsByCustomerType_shouldCallRepositoryAndMapResults() {
+        // Arrange
+        CustomerType customerType = CustomerType.PRIVATE_CUSTOMER;
+        List<Project> mockProjects = List.of(new Project(), new Project());
+        when(projectRepository.findByCustomerType(customerType)).thenReturn(mockProjects);
+
+        // Act
+        List<ProjectResponse> result = projectService.getProjectsByCustomerType(customerType);
+
+        // Assert
+        verify(projectRepository).findByCustomerType(customerType);
+        assertThat(result).hasSize(2);
     }
 
+    @Test
+    @DisplayName("getProjectsByCustomerType - returns empty list when no projects match customer type filter")
+    void getProjectsByCustomerType_shouldReturnEmptyListWhenNoProjectsFound() {
+        // Arrange
+        CustomerType customerType = CustomerType.BUSINESS_CUSTOMER;
+        when(projectRepository.findByCustomerType(customerType)).thenReturn(Collections.emptyList());
+
+        // Act
+        List<ProjectResponse> result = projectService.getProjectsByCustomerType(customerType);
+
+        // Assert
+        verify(projectRepository).findByCustomerType(customerType);
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("getProjectsByFilters - calls combined repository method when both filters are provided")
+    void getProjectsByFilters_withBothParameters_shouldCallCombinedRepositoryMethod() {
+        // Arrange
+        WorkType workType = WorkType.ROOF_CLEANING;
+        CustomerType customerType = CustomerType.BUSINESS_CUSTOMER;
+        List<Project> mockProjects = List.of(new Project());
+        when(projectRepository.findByWorkTypeAndCustomerType(eq(workType), eq(customerType), any(Sort.class)))
+                .thenReturn(mockProjects);
+
+        // Act
+        List<ProjectResponse> result = projectService.getProjectsByFilters(workType, customerType, null);
+
+        // Assert
+        verify(projectRepository).findByWorkTypeAndCustomerType(eq(workType), eq(customerType), any(Sort.class));
+        verify(projectRepository, never()).findByWorkType(any());
+        verify(projectRepository, never()).findByCustomerType(any());
+        verify(projectRepository, never()).findAll(any(Sort.class));
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("getProjectsByFilters - calls workType repository method when only workType is provided")
+    void getProjectsByFilters_withOnlyWorkType_shouldCallWorkTypeRepository() {
+        // Arrange
+        WorkType workType = WorkType.FACADE_CLEANING;
+        List<Project> mockProjects = List.of(new Project());
+        when(projectRepository.findByWorkType(eq(workType), any(Sort.class))).thenReturn(mockProjects);
+
+        // Act
+        List<ProjectResponse> result = projectService.getProjectsByFilters(workType, null, null);
+
+        // Assert
+        verify(projectRepository).findByWorkType(eq(workType), any(Sort.class));
+        verify(projectRepository, never()).findByCustomerType(any(), any());
+        verify(projectRepository, never()).findByWorkTypeAndCustomerType(any(), any(), any());
+        verify(projectRepository, never()).findAll(any(Sort.class));
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("getProjectsByFilters - calls customerType repository method when only customerType is provided")
+    void getProjectsByFilters_withOnlyCustomerType_shouldCallCustomerTypeRepository() {
+        // Arrange
+        CustomerType customerType = CustomerType.PRIVATE_CUSTOMER;
+        List<Project> mockProjects = List.of(new Project());
+        when(projectRepository.findByCustomerType(eq(customerType), any(Sort.class))).thenReturn(mockProjects);
+
+        // Act
+        List<ProjectResponse> result = projectService.getProjectsByFilters(null, customerType, null);
+
+        // Assert
+        verify(projectRepository).findByCustomerType(eq(customerType), any(Sort.class));
+        verify(projectRepository, never()).findByWorkType(any(), any());
+        verify(projectRepository, never()).findByWorkTypeAndCustomerType(any(), any(), any());
+        verify(projectRepository, never()).findAll(any(Sort.class));
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("getProjectsByFilters - calls findAll when no filter parameters are provided")
+    void getProjectsByFilters_withNoParameters_shouldCallFindAll() {
+        // Arrange
+        List<Project> mockProjects = List.of(new Project(), new Project());
+        when(projectRepository.findAll(any(Sort.class))).thenReturn(mockProjects);
+
+        // Act
+        List<ProjectResponse> result = projectService.getProjectsByFilters(null, null, null);
+
+        // Assert
+        verify(projectRepository).findAll(any(Sort.class));
+        verify(projectRepository, never()).findByWorkType(any(), any());
+        verify(projectRepository, never()).findByCustomerType(any(), any());
+        verify(projectRepository, never()).findByWorkTypeAndCustomerType(any(), any(), any());
+        assertThat(result).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("getProjectsByFilters - returns empty list when no projects match the filters")
+    void getProjectsByFilters_withNoProjectsFound_shouldReturnEmptyList() {
+        // Arrange
+        when(projectRepository.findAll(any(Sort.class))).thenReturn(Collections.emptyList());
+
+        // Act
+        List<ProjectResponse> result = projectService.getProjectsByFilters(null, null, null);
+
+        // Assert
+        verify(projectRepository).findAll(any(Sort.class));
+        assertThat(result).isEmpty();
+    }
+
+
+    // TODO: Slet hvis vi ikke implementerer metoden
     @Test
     void getProjectsByDateRange_throwsUnsupportedOperationException() {
         assertThatThrownBy(() -> projectService.getProjectsByDateRange(
