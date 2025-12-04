@@ -278,21 +278,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     }
 
-    @Override
-    public List<ProjectResponse> getProjectsByServiceCategory(WorkType workType) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public List<ProjectResponse> getProjectsByCustomerType(CustomerType customerType) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public List<ProjectResponse> getProjectsByFilters(WorkType workType, CustomerType customerType) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
+    // TODO: Er dette noget vi skal bruge til noget, ellers skal den vel slettes? :) Kan ikke se noget task på den.
     @Override
     public List<ProjectResponse> getProjectsByDateRange(LocalDate startDate, LocalDate endDate) {
         throw new UnsupportedOperationException("Not implemented yet");
@@ -431,5 +417,47 @@ public class ProjectServiceImpl implements ProjectService {
         // Default sort is the latest project first
         return Sort.by(Sort.Direction.DESC, "creationDate");
     }
+
+    // ==== FILTRERINGSLOGIK ===
+
+    // TODO: Implementer metoder
+
+    @Override
+    public List<ProjectResponse> getProjectsByWorkType(WorkType workType) {
+        List<Project> projects = projectRepository.findByWorkType(workType);
+
+        return projects.stream()
+                .map(projectMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<ProjectResponse> getProjectsByCustomerType(CustomerType customerType) {
+        List<Project> projects = projectRepository.findByCustomerType(customerType);
+
+        return projects.stream()
+                .map(projectMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<ProjectResponse> getProjectsByFilters(WorkType workType, CustomerType customerType) {
+        List<Project> projects;
+
+        if (workType != null && customerType != null) {
+            projects = projectRepository.findByWorkTypeAndCustomerType(workType, customerType);
+        } else if (workType != null) {
+            projects = projectRepository.findByWorkType(workType);
+        } else if (customerType != null) {
+            projects = projectRepository.findByCustomerType(customerType);
+        } else {
+            projects = projectRepository.findAll();
+        }
+
+        return projects.stream()
+                .map(projectMapper::toResponse)
+                .toList();
+    }
+
 
 }

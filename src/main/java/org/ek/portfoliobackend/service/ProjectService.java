@@ -4,7 +4,6 @@ import org.ek.portfoliobackend.dto.request.CreateProjectRequest;
 import org.ek.portfoliobackend.dto.request.ImageUploadRequest;
 import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
 import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
-import org.ek.portfoliobackend.dto.response.ImageResponse;
 import org.ek.portfoliobackend.dto.response.ProjectResponse;
 import org.ek.portfoliobackend.model.CustomerType;
 import org.ek.portfoliobackend.model.WorkType;
@@ -34,8 +33,8 @@ public interface ProjectService {
     //delete project by id
     void deleteProject(Long id);
 
-    //get projects by service category
-    List<ProjectResponse> getProjectsByServiceCategory(WorkType workType);
+    //get projects by work type
+    List<ProjectResponse> getProjectsByWorkType(WorkType workType);
 
     //get projects filtered by customer type
     List<ProjectResponse> getProjectsByCustomerType(CustomerType customerType);
