@@ -4,6 +4,7 @@ import org.ek.portfoliobackend.dto.request.CreateProjectRequest;
 import org.ek.portfoliobackend.dto.request.ImageUploadRequest;
 import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
 import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
+import org.ek.portfoliobackend.dto.response.ImageResponse;
 import org.ek.portfoliobackend.dto.response.ProjectResponse;
 import org.ek.portfoliobackend.mapper.ProjectMapper;
 import org.ek.portfoliobackend.model.CustomerType;
@@ -15,6 +16,8 @@ import org.ek.portfoliobackend.repository.ImageRepository;
 import org.ek.portfoliobackend.repository.ProjectRepository;
 import org.ek.portfoliobackend.service.ImageStorageService;
 import org.ek.portfoliobackend.service.ProjectService;
+import org.hibernate.annotations.NotFound;
+import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.ek.portfoliobackend.exception.custom.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -102,6 +105,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
     }
 
+    // Update project
     @Override
     @Transactional
     public ProjectResponse updateProject(Long id, UpdateProjectRequest request) {
@@ -119,6 +123,26 @@ public class ProjectServiceImpl implements ProjectService {
         return projectMapper.toResponse(updatedProject);
     }
 
+    // Update image
+    @Override
+    @Transactional
+    public ImageResponse updateImage(Long imageId, UpdateImageRequest request) {
+
+        Image image = findImageById(imageId);
+
+        deleteImageUrl(image, request);
+
+        // Updates the image metadata
+        projectMapper.updateImageEntity(request, image);
+
+        // Saves new image
+        imageRepository.save(image);
+
+        return projectMapper.toImageResponse(image);
+
+    }
+
+
     @Override
     public ProjectResponse getProjectById(Long id) {
         Project project = projectRepository.findById(id)
@@ -135,8 +159,15 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
     public void deleteProject(Long id) {
-        throw new UnsupportedOperationException("Not implemented yet");
+
+        Project project = findProjectById(id);
+
+        deleteAllImages(project);
+
+        projectRepository.delete(project);
+
     }
 
     @Override
@@ -163,6 +194,8 @@ public class ProjectServiceImpl implements ProjectService {
     public List<ProjectResponse> getAllProjectsOrderedByDate() {
         throw new UnsupportedOperationException("Not implemented yet");
     }
+
+    // --- Helpers for create project ---
 
     /**
      * Validate that images and metadata lists are not null and have matching sizes
@@ -209,6 +242,44 @@ public class ProjectServiceImpl implements ProjectService {
             throw new IllegalArgumentException("At least one AFTER image must be provided");
         }
     }
+
+    // --- Helper for update project ---
+
+    private Project findProjectById(Long id) {
+
+        return projectRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Project not found with id " + id));
+    }
+
+    // --- Helper for update image ---
+
+    private Image findImageById(Long imageId) {
+
+        return imageRepository.findById(imageId)
+                .orElseThrow(() -> new RuntimeException("Image not found with id " + imageId));
+    }
+
+    // --- Helper for delete image ---
+
+    private void deleteImageUrl(Image image, UpdateImageRequest request) {
+
+        // If URL changes, delete the old one
+        if (request.getUrl() != null && !request.getUrl().equals(image.getUrl())) {
+            imageStorageService.delete(image.getUrl());
+        }
+
+    }
+    // --- Method for delete project ---
+
+    private void deleteAllImages(Project project) {
+
+        for (Image image : project.getImages()) {
+            if (image.getUrl() != null) {
+                imageStorageService.delete(image.getUrl());
+            }
+        }
+    }
+
 
     @Override
     @Transactional
