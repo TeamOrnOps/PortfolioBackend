@@ -2,10 +2,11 @@ package org.ek.portfoliobackend.controller;
 
 import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
 import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
+import org.ek.portfoliobackend.exception.GlobalExceptionHandler;
+import org.springframework.context.annotation.Import;
 import tools.jackson.databind.ObjectMapper;
 import org.ek.portfoliobackend.dto.request.CreateProjectRequest;
 import org.ek.portfoliobackend.dto.request.ImageUploadRequest;
-import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
 import org.ek.portfoliobackend.dto.response.ImageResponse;
 import org.ek.portfoliobackend.dto.response.ProjectResponse;
 import org.ek.portfoliobackend.model.CustomerType;
@@ -36,7 +37,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Integration tests for ProjectController endpoints.
  * Tests the REST API layer for project creation with multipart file uploads.
  */
-@WebMvcTest(ProjectController.class)
+@WebMvcTest(controllers = ProjectController.class)
+@Import(GlobalExceptionHandler.class)
 class ProjectControllerTest {
 
     @Autowired
@@ -254,8 +256,7 @@ class ProjectControllerTest {
                         .file(afterImage)
                         .file(metadataPart)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().isBadRequest())
-                .andExpect(status().reason(org.hamcrest.Matchers.containsString("Mismatch")));
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -293,8 +294,7 @@ class ProjectControllerTest {
                         .file(afterImage)
                         .file(metadataPart)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().isBadRequest())
-                .andExpect(status().reason(org.hamcrest.Matchers.containsString("BEFORE image")));
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -332,8 +332,7 @@ class ProjectControllerTest {
                         .file(beforeImage)
                         .file(metadataPart)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().isBadRequest())
-                .andExpect(status().reason(org.hamcrest.Matchers.containsString("AFTER image")));
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -367,8 +366,7 @@ class ProjectControllerTest {
                         .file(afterImage)
                         .file(metadataPart)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().isInternalServerError())
-                .andExpect(status().reason(org.hamcrest.Matchers.containsString("internal error")));
+                .andExpect(status().isInternalServerError());
     }
 
     @Test

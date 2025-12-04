@@ -22,7 +22,6 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -734,7 +733,7 @@ class ProjectServiceImplTest {
         when(projectMapper.toResponse(any())).thenReturn(new ProjectResponse());
 
         // Act
-        ProjectResponse result = projectService.updateImageMetadata(1L, 10L, request);
+        ProjectResponse result = projectService.updateImageMetadata(1L, 1L, request);
 
         // Assert
         assertNotNull(result);
