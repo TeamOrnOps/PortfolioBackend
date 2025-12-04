@@ -23,7 +23,7 @@ public interface ProjectService {
     //update existing project
     ProjectResponse updateProject(Long id, UpdateProjectRequest request);
 
-    ImageResponse updateImage(Long imageId, UpdateImageRequest request);
+   // ImageResponse updateImage(Long imageId, UpdateImageRequest request);
 
     //get project by id
     ProjectResponse getProjectById(Long id);
@@ -47,7 +47,8 @@ public interface ProjectService {
     List<ProjectResponse> getProjectsByDateRange(LocalDate startDate, LocalDate endDate);
 
     //get all projects ordered by creation date (newest first)
-    List<ProjectResponse> getAllProjectsOrderedByDate();
+    List<ProjectResponse> getAllProjectsOrderedByDate(String sortDirection);
+
 
     //add images to existing project
     ProjectResponse addImagesToProject(Long projectId, List<MultipartFile> images, List<ImageUploadRequest> imageMetadata);

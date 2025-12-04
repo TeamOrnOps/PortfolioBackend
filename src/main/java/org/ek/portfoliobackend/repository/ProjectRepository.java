@@ -3,6 +3,7 @@ package org.ek.portfoliobackend.repository;
 import org.ek.portfoliobackend.model.CustomerType;
 import org.ek.portfoliobackend.model.Project;
 import org.ek.portfoliobackend.model.WorkType;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
