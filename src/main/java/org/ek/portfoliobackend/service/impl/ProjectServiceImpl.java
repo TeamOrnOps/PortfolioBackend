@@ -16,7 +16,10 @@ import org.ek.portfoliobackend.repository.ImageRepository;
 import org.ek.portfoliobackend.repository.ProjectRepository;
 import org.ek.portfoliobackend.service.ImageStorageService;
 import org.ek.portfoliobackend.service.ProjectService;
+import org.hibernate.annotations.NotFound;
+import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.ek.portfoliobackend.exception.custom.ResourceNotFoundException;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -107,9 +110,8 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public ProjectResponse updateProject(Long id, UpdateProjectRequest request) {
-        // Find existing project
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
+
+        Project project = findProjectById(id);
 
         // Update project fields with mapper
         projectMapper.updateProjectEntity(request, project);
@@ -121,25 +123,24 @@ public class ProjectServiceImpl implements ProjectService {
         return projectMapper.toResponse(updatedProject);
     }
 
-    // Update image
-    @Override
-    @Transactional
-    public ImageResponse updateImage(Long imageId, UpdateImageRequest request) {
-
-        Image image = findImageById(imageId);
-
-        deleteImageUrl(image, request);
-
-        // Updates the image metadata
-        projectMapper.updateImageEntity(request, image);
-
-        // Saves new image
-        imageRepository.save(image);
-
-        return projectMapper.toImageResponse(image);
-
-    }
-
+//    // Update image
+//    @Override
+//    @Transactional
+//    public ImageResponse updateImage(Long imageId, UpdateImageRequest request) {
+//
+//        Image image = findImageById(imageId);
+//
+//        deleteImageUrl(image, request);
+//
+//        // Updates the image metadata
+//        projectMapper.updateImageEntity(request, image);
+//
+//        // Saves new image
+//        imageRepository.save(image);
+//
+//        return projectMapper.toImageResponse(image);
+//
+//    }
 
     @Override
     public ProjectResponse getProjectById(Long id) {
@@ -155,124 +156,6 @@ public class ProjectServiceImpl implements ProjectService {
                 .map(projectMapper::toResponse)
                 .toList();
     }
-
-    @Override
-    @Transactional
-    public void deleteProject(Long id) {
-
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
-
-        // Delete all associated images from storage
-        for (Image image : project.getImages()) {
-            try {
-                imageStorageService.delete(image.getUrl());
-            } catch (Exception e) {
-                // Log but don't fail
-            }
-        }
-        // delete image records from db
-        imageRepository.deleteAll(project.getImages());
-        // delete project
-        projectRepository.delete(project);
-    }
-
-    @Override
-    public List<ProjectResponse> getProjectsByServiceCategory(WorkType workType) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public List<ProjectResponse> getProjectsByCustomerType(CustomerType customerType) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public List<ProjectResponse> getProjectsByFilters(WorkType workType, CustomerType customerType) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public List<ProjectResponse> getProjectsByDateRange(LocalDate startDate, LocalDate endDate) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public List<ProjectResponse> getAllProjectsOrderedByDate() {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    // --- Helpers for create project ---
-
-    /**
-     * Validate that images and metadata lists are not null and have matching sizes
-     */
-    private void validateInputs(List<MultipartFile> images, List<ImageUploadRequest> imageMetadata) {
-        if (images == null || images.isEmpty()) {
-            throw new IllegalArgumentException("At least one image must be provided");
-        }
-
-        if (imageMetadata == null || imageMetadata.isEmpty()) {
-            throw new IllegalArgumentException("Image metadata must be provided");
-        }
-
-        if (images.size() != imageMetadata.size()) {
-            throw new IllegalArgumentException("Number of images must match number of metadata entries");
-        }
-    }
-
-    /**
-     * Validate that at least one BEFORE and one AFTER image is included
-     */
-    private void validateImageTypes(List<ImageUploadRequest> imageMetadata) {
-        boolean hasBeforeImage = false;
-        boolean hasAfterImage = false;
-
-        for (ImageUploadRequest metadata : imageMetadata) {
-            if (metadata.getImageType() == ImageType.BEFORE) {
-                hasBeforeImage = true;
-            } else if (metadata.getImageType() == ImageType.AFTER) {
-                hasAfterImage = true;
-            }
-
-            // Early exit if both types are found
-            if (hasBeforeImage && hasAfterImage) {
-                return;
-            }
-        }
-
-        if (!hasBeforeImage) {
-            throw new IllegalArgumentException("At least one BEFORE image must be provided");
-        }
-
-        if (!hasAfterImage) {
-            throw new IllegalArgumentException("At least one AFTER image must be provided");
-        }
-    }
-
-    // --- Helper for update project ---
-
-    private Project findProjectById(Long id) {
-        return projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
-    }
-
-    private Image findImageById(Long imageId) {
-        return imageRepository.findById(imageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Image", imageId));
-    }
-
-    // --- Helper for delete image ---
-
-    private void deleteImageUrl(Image image, UpdateImageRequest request) {
-
-        // If URL changes, delete the old one
-        if (request.getUrl() != null && !request.getUrl().equals(image.getUrl())) {
-            imageStorageService.delete(image.getUrl());
-        }
-
-    }
-
     @Override
     @Transactional
     public ProjectResponse addImagesToProject(Long projectId,
@@ -382,6 +265,151 @@ public class ProjectServiceImpl implements ProjectService {
 
         return projectMapper.toResponse(project);
     }
+
+    @Override
+    @Transactional
+    public void deleteProject(Long id) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
+
+        // Delete image files from storage
+        for (Image image : project.getImages()) {
+            try {
+                imageStorageService.delete(image.getUrl());
+            } catch (Exception e) {
+                // Log but don't fail
+            }
+        }
+
+        // Delete image records from db
+        imageRepository.deleteAll(project.getImages());
+
+        // Delete project
+        projectRepository.delete(project);
+    }
+
+    @Override
+    public List<ProjectResponse> getProjectsByServiceCategory(WorkType workType) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public List<ProjectResponse> getProjectsByCustomerType(CustomerType customerType) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public List<ProjectResponse> getProjectsByFilters(WorkType workType, CustomerType customerType) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public List<ProjectResponse> getProjectsByDateRange(LocalDate startDate, LocalDate endDate) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    // TODO
+    @Override
+    public List<ProjectResponse> getAllProjectsOrderedByDate(String sortDirection) {
+
+        Sort sort = sortByDate(sortDirection);
+
+        List<Project> projects = projectRepository.findAll(sort);
+
+
+        return projects.stream()
+                .map(projectMapper::toResponse)
+                .toList();
+
+    }
+
+    // --- Helpers for create project ---
+
+    /**
+     * Validate that images and metadata lists are not null and have matching sizes
+     */
+    private void validateInputs(List<MultipartFile> images, List<ImageUploadRequest> imageMetadata) {
+        if (images == null || images.isEmpty()) {
+            throw new IllegalArgumentException("At least one image must be provided");
+        }
+
+        if (imageMetadata == null || imageMetadata.isEmpty()) {
+            throw new IllegalArgumentException("Image metadata must be provided");
+        }
+
+        if (images.size() != imageMetadata.size()) {
+            throw new IllegalArgumentException("Number of images must match number of metadata entries");
+        }
+    }
+
+    /**
+     * Validate that at least one BEFORE and one AFTER image is included
+     */
+    private void validateImageTypes(List<ImageUploadRequest> imageMetadata) {
+        boolean hasBeforeImage = false;
+        boolean hasAfterImage = false;
+
+        for (ImageUploadRequest metadata : imageMetadata) {
+            if (metadata.getImageType() == ImageType.BEFORE) {
+                hasBeforeImage = true;
+            } else if (metadata.getImageType() == ImageType.AFTER) {
+                hasAfterImage = true;
+            }
+
+            // Early exit if both types are found
+            if (hasBeforeImage && hasAfterImage) {
+                return;
+            }
+        }
+
+        if (!hasBeforeImage) {
+            throw new IllegalArgumentException("At least one BEFORE image must be provided");
+        }
+
+        if (!hasAfterImage) {
+            throw new IllegalArgumentException("At least one AFTER image must be provided");
+        }
+    }
+
+    // --- Helper for update project ---
+
+    private Project findProjectById(Long id) {
+
+        return projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
+    }
+
+    // --- Helper for update image ---
+
+    private Image findImageById(Long imageId) {
+
+        return imageRepository.findById(imageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Image", imageId));
+    }
+
+    // --- Helper for delete image ---
+
+    private void deleteImageUrl(Image image, UpdateImageRequest request) {
+
+        // If URL changes, delete the old one
+        if (request.getUrl() != null && !request.getUrl().equals(image.getUrl())) {
+            imageStorageService.delete(image.getUrl());
+        }
+
+    }
+    // --- Helper for delete project ---
+
+    private void deleteAllImages(Project project) {
+
+        for (Image image : project.getImages()) {
+            if (image.getUrl() != null) {
+                imageStorageService.delete(image.getUrl());
+            }
+        }
+    }
+
+
+
     /**
      * Validate that deleting the image will not violate business rules
      */
@@ -403,4 +431,15 @@ public class ProjectServiceImpl implements ProjectService {
             throw new IllegalArgumentException("Cannot delete the last AFTER image of the project");
         }
     }
+    // --- Helper for sort by date ---
+    private Sort sortByDate(String sortDirection) {
+
+        if (sortDirection != null && sortDirection.equalsIgnoreCase("asc")) {
+            return Sort.by(Sort.Direction.ASC, "creationDate");
+        }
+
+        // Default sort is the latest project first
+        return Sort.by(Sort.Direction.DESC, "creationDate");
+    }
+
 }

@@ -351,115 +351,117 @@ class ProjectServiceImplTest {
     // ---- TDD tests for update ----
 
 
-
-    // Image not found
-    @Test
-    void updateImage_throwsException_whenImageNotFound() {
-
-        // Given
-        when(imageRepository.findById(10L)).thenReturn(Optional.empty());
-
-        // When + then
-        assertThrows(RuntimeException.class, () -> projectService.updateImage(10L, mockUpdateImageRequest));
-
-        verify(imageRepository, times(1)).findById(10L);
-        verifyNoMoreInteractions(imageStorageService);
-    }
-
-    // When URL is not changed, keep the old
-    @Test
-    void updateImage_shouldNotDeleteFile_whenUrlIsUnchanged() {
-
-        // Given
-        mockUpdateImageRequest.setUrl("/uploads/old.jpg"); // Same URL as in test setup()
-        when(imageRepository.findById(10L)).thenReturn(Optional.of(existingImage));
-        when(projectMapper.toImageResponse(existingImage)).thenReturn(mockImageResponse);
-
-        // When
-        ImageResponse result = projectService.updateImage(10L, mockUpdateImageRequest);
-
-        // Then
-        verify(imageStorageService, never()).delete(anyString());
-        verify(projectMapper).updateImageEntity(mockUpdateImageRequest, existingImage);
-        verify(imageRepository).save(existingImage);
-        assertNotNull(result);
-
-    }
-
-    // When URL is changed, replace it
-    @Test
-    void updateImage_shouldDeleteOldFile_whenUrlIsChanged() {
-
-        // Given
-        mockUpdateImageRequest.setUrl("/uploads/new.jpg");
-        when(imageRepository.findById(10L)).thenReturn(Optional.of(existingImage));
-        when(projectMapper.toImageResponse(existingImage)).thenReturn(mockImageResponse);
-
-        // When
-        projectService.updateImage(10L, mockUpdateImageRequest);
-
-        // Then
-        verify(imageStorageService).delete("/uploads/old.jpg");
-        verify(projectMapper).updateImageEntity(mockUpdateImageRequest, existingImage);
-        verify(imageRepository).save(existingImage);
-    }
-
-    // Update metadata
-    @Test
-    void updateImage_shouldUpdateMetadata() {
-
-        // Given
-        mockUpdateImageRequest.setUrl("/uploads/old.jpg");
-        mockUpdateImageRequest.setImageType(ImageType.AFTER);
-        mockUpdateImageRequest.setIsFeatured(true);
-
-        when(imageRepository.findById(10L)).thenReturn(Optional.of(existingImage));
-        when(projectMapper.toImageResponse(existingImage)).thenReturn(mockImageResponse);
-
-        // When
-        projectService.updateImage(10L, mockUpdateImageRequest);
-
-        // Then
-        verify(projectMapper).updateImageEntity(mockUpdateImageRequest, existingImage);
-    }
-
-    // Ignore null fields
-    @Test
-    void updateImage_shouldIgnoreNullFields() {
-
-        // Given
-        mockUpdateImageRequest.setUrl(null);
-        mockUpdateImageRequest.setImageType(null);
-        mockUpdateImageRequest.setIsFeatured(null);
-
-        when(imageRepository.findById(10L)).thenReturn(Optional.of(existingImage));
-        when(projectMapper.toImageResponse(existingImage)).thenReturn(mockImageResponse);
-
-        // When
-        projectService.updateImage(10L, mockUpdateImageRequest);
-
-        // Then
-        verify(projectMapper).updateImageEntity(mockUpdateImageRequest, existingImage);
-        verify(imageStorageService, never()).delete(anyString());
-    }
-
-    // Save and return the mapped DTO
-    @Test
-    void updateImage_shouldReturnMappedResponse() {
-
-        // Given
-        mockUpdateImageRequest.setUrl("/uploads/new.jpg");
-
-        when(imageRepository.findById(10L)).thenReturn(Optional.of(existingImage));
-        when(projectMapper.toImageResponse(existingImage)).thenReturn(mockImageResponse);
-
-        // When
-        ImageResponse result = projectService.updateImage(10L, mockUpdateImageRequest);
-
-        // Then
-        assertEquals(10L, result.getId());
-        verify(imageRepository).save(existingImage);
-    }
+/**
+TDD test for old update image method
+ */
+//    // Image not found
+//    @Test
+//    void updateImage_throwsException_whenImageNotFound() {
+//
+//        // Given
+//        when(imageRepository.findById(10L)).thenReturn(Optional.empty());
+//
+//        // When + then
+//        assertThrows(RuntimeException.class, () -> projectService.updateImage(10L, mockUpdateImageRequest));
+//
+//        verify(imageRepository, times(1)).findById(10L);
+//        verifyNoMoreInteractions(imageStorageService);
+//    }
+//
+//    // When URL is not changed, keep the old
+//    @Test
+//    void updateImage_shouldNotDeleteFile_whenUrlIsUnchanged() {
+//
+//        // Given
+//        mockUpdateImageRequest.setUrl("/uploads/old.jpg"); // Same URL as in test setup()
+//        when(imageRepository.findById(10L)).thenReturn(Optional.of(existingImage));
+//        when(projectMapper.toImageResponse(existingImage)).thenReturn(mockImageResponse);
+//
+//        // When
+//        ImageResponse result = projectService.updateImage(10L, mockUpdateImageRequest);
+//
+//        // Then
+//        verify(imageStorageService, never()).delete(anyString());
+//        verify(projectMapper).updateImageEntity(mockUpdateImageRequest, existingImage);
+//        verify(imageRepository).save(existingImage);
+//        assertNotNull(result);
+//
+//    }
+//
+//    // When URL is changed, replace it
+//    @Test
+//    void updateImage_shouldDeleteOldFile_whenUrlIsChanged() {
+//
+//        // Given
+//        mockUpdateImageRequest.setUrl("/uploads/new.jpg");
+//        when(imageRepository.findById(10L)).thenReturn(Optional.of(existingImage));
+//        when(projectMapper.toImageResponse(existingImage)).thenReturn(mockImageResponse);
+//
+//        // When
+//        projectService.updateImage(10L, mockUpdateImageRequest);
+//
+//        // Then
+//        verify(imageStorageService).delete("/uploads/old.jpg");
+//        verify(projectMapper).updateImageEntity(mockUpdateImageRequest, existingImage);
+//        verify(imageRepository).save(existingImage);
+//    }
+//
+//    // Update metadata
+//    @Test
+//    void updateImage_shouldUpdateMetadata() {
+//
+//        // Given
+//        mockUpdateImageRequest.setUrl("/uploads/old.jpg");
+//        mockUpdateImageRequest.setImageType(ImageType.AFTER);
+//        mockUpdateImageRequest.setIsFeatured(true);
+//
+//        when(imageRepository.findById(10L)).thenReturn(Optional.of(existingImage));
+//        when(projectMapper.toImageResponse(existingImage)).thenReturn(mockImageResponse);
+//
+//        // When
+//        projectService.updateImage(10L, mockUpdateImageRequest);
+//
+//        // Then
+//        verify(projectMapper).updateImageEntity(mockUpdateImageRequest, existingImage);
+//    }
+//
+//    // Ignore null fields
+//    @Test
+//    void updateImage_shouldIgnoreNullFields() {
+//
+//        // Given
+//        mockUpdateImageRequest.setUrl(null);
+//        mockUpdateImageRequest.setImageType(null);
+//        mockUpdateImageRequest.setIsFeatured(null);
+//
+//        when(imageRepository.findById(10L)).thenReturn(Optional.of(existingImage));
+//        when(projectMapper.toImageResponse(existingImage)).thenReturn(mockImageResponse);
+//
+//        // When
+//        projectService.updateImage(10L, mockUpdateImageRequest);
+//
+//        // Then
+//        verify(projectMapper).updateImageEntity(mockUpdateImageRequest, existingImage);
+//        verify(imageStorageService, never()).delete(anyString());
+//    }
+//
+//    // Save and return the mapped DTO
+//    @Test
+//    void updateImage_shouldReturnMappedResponse() {
+//
+//        // Given
+//        mockUpdateImageRequest.setUrl("/uploads/new.jpg");
+//
+//        when(imageRepository.findById(10L)).thenReturn(Optional.of(existingImage));
+//        when(projectMapper.toImageResponse(existingImage)).thenReturn(mockImageResponse);
+//
+//        // When
+//        ImageResponse result = projectService.updateImage(10L, mockUpdateImageRequest);
+//
+//        // Then
+//        assertEquals(10L, result.getId());
+//        verify(imageRepository).save(existingImage);
+//    }
 
     // ---- TDD tests for delete ----
 
@@ -656,12 +658,7 @@ class ProjectServiceImplTest {
                 .hasMessage("Not implemented yet");
     }
 
-    @Test
-    void getAllProjectsOrderedByDate_throwsUnsupportedOperationException() {
-        assertThatThrownBy(() -> projectService.getAllProjectsOrderedByDate())
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessage("Not implemented yet");
-    }
+
 
     @Test
     @DisplayName("addImagesToProject - Success")
