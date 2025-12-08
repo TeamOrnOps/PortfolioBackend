@@ -1,6 +1,6 @@
 package org.ek.portfoliobackend.security;
 
-import org.ek.portfoliobackend.filter.JwtAuthenticationFilter;
+import org.ek.portfoliobackend.security.filter.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
