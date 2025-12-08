@@ -14,11 +14,9 @@ import static org.springframework.security.core.userdetails.User.withUsername;
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final UserRepository userRepository;
-    private final UserDetailsPasswordService userDetailsPasswordService;
 
-    public UserDetailsServiceImpl(UserRepository userRepository, UserDetailsPasswordService userDetailsPasswordService) {
+    public UserDetailsServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.userDetailsPasswordService = userDetailsPasswordService;
     }
 
 
