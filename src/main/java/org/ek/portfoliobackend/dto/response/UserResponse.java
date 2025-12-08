@@ -5,17 +5,16 @@ public class UserResponse {
     private Long id;
     private String username;
     private String email;
-    private String role;
 
     //no-args constructor
     public UserResponse(){}
 
     //all-args constructor
-    public UserResponse(Long id, String username, String email, String role) {
+    public UserResponse(Long id, String username, String email) {
         this.id = id;
         this.username = username;
         this.email = email;
-        this.role = role;
+
     }
 
     public Long getId() {
@@ -42,11 +41,5 @@ public class UserResponse {
         this.email = email;
     }
 
-    public String getRole() {
-        return role;
-    }
 
-    public void setRole(String role) {
-        this.role = role;
-    }
 }

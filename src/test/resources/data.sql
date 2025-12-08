@@ -1,4 +1,4 @@
-INSERT INTO profile(name, email, password) VALUES
+INSERT INTO user(name, email, password) VALUES
     ('Admin Bruger', 'admin@example.com', 'testpassword'),
     ('Test Bruger', 'test@example.com', 'testpassword');
 
