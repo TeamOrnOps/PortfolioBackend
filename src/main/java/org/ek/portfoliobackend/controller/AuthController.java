@@ -1,6 +1,6 @@
 package org.ek.portfoliobackend.controller;
 
-import org.ek.portfoliobackend.security.filter.JwtTokenGenerator;
+import org.ek.portfoliobackend.security.JwtTokenGenerator;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;

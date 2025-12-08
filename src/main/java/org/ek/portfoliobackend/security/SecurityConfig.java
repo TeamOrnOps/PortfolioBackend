@@ -1,6 +1,5 @@
 package org.ek.portfoliobackend.security;
 
-import org.ek.portfoliobackend.security.filter.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -32,14 +31,19 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "api/projects/**").permitAll()
+                        // Public
+                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/projects/**").permitAll()
 
-                        .requestMatchers(HttpMethod.POST, "api/projects/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "api/projects/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "api/projects/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "api/projects/**").hasRole("ADMIN")
+                        // Admin
+                        .requestMatchers(HttpMethod.POST, "/api/projects/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/projects/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/projects/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/projects/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/projects/*/images/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/projects/*/images/**").hasRole("ADMIN")
 
+                        // The rest
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

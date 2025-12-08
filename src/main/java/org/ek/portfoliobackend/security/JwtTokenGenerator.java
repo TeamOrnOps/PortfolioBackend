@@ -1,4 +1,4 @@
-package org.ek.portfoliobackend.security.filter;
+package org.ek.portfoliobackend.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

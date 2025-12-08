@@ -17,6 +17,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
 
+    // Creates UserDetails-object for Spring to understand
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 

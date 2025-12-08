@@ -1,4 +1,4 @@
-package org.ek.portfoliobackend.security.filter;
+package org.ek.portfoliobackend.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -13,7 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-// ---- Reads the generated token and sets the security context ----
+// ---- CHECKS EVERY HTTP-REQUEST FROM CLIENT FOR JWT-TOKEN ----
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -31,16 +31,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
 
-        if (header == null || !header.startsWith("Bearer ")) {
-            String jwt = header.substring(7);
+        if (header != null && header.startsWith("Bearer ")) {
 
+            // Extract token
+            String jwt = header.substring("Bearer ".length()); // Fjerner "Bearer "
+
+            // Extract username from token
             String username = jwtUtil.extractUsername(jwt);
+
+            // Load user fra UserDetails
             UserDetails user = userDetailsService.loadUserByUsername(username);
 
+            // Create Authentication object
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
 
+            // Store Authentication in SecurityContext
             SecurityContextHolder.getContext().setAuthentication(auth);
+
         }
+
+        // Continue filter chain with or without token
         filterChain.doFilter(request, response);
     }
 }
