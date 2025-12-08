@@ -47,4 +47,4 @@ logs/
 *.log
 
 ## Frontend folder (seperate repository)
-frontend/ 
+frontend/
