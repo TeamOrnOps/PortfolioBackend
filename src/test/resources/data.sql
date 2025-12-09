@@ -12,5 +12,3 @@ INSERT INTO image(url, image_type, is_featured, project_id) VALUES
                                                                 ('https://example.com/after1.jpg', 'AFTER', true, 1),
                                                                 ('https://example.com/before2.jpg', 'BEFORE', false, 2),
                                                                 ('https://example.com/after2.jpg', 'AFTER', true, 2);
--- INSERT INTO users (username, email, password) VALUES
---     ('admin', 'admin@example.com', 'testpassword');
