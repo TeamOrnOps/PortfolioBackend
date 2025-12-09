@@ -3,8 +3,7 @@ package org.ek.portfoliobackend.controller;
 import org.ek.portfoliobackend.security.JwtAuthenticationFilter;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 
-
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.ek.portfoliobackend.dto.request.CreateUserRequest;
 import org.ek.portfoliobackend.dto.request.UpdateUserRequest;
 import org.ek.portfoliobackend.dto.response.UserResponse;
@@ -27,14 +26,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(UserController.class)
 @AutoConfigureMockMvc(addFilters = false)
-
 class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @MockitoBean
     private UserService userService;
