@@ -41,6 +41,8 @@ build/
 .env
 .env.*
 !.env.example
+# !! Skal fjernes når vi skifter til produktion!!
+!.env.production
 
 ### Logs ###
 logs/
