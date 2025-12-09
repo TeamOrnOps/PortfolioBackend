@@ -37,9 +37,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
 
+      # ========================================================================
+      # FIX: Konverter repository_owner til lowercase
+      # GitHub Actions konverterer IKKE automatisk til lowercase!
+      # TeamOrnOps → teamornops
+      # ========================================================================
+      - name: Set lowercase repository owner
+        id: repo
+        run: |
+          echo "owner_lc=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/algenord-backend:latest .
+          docker build -t ghcr.io/${{ steps.repo.outputs.owner_lc }}/algenord-backend:latest .
 
       - name: Create test .env
         run: |
@@ -93,7 +103,7 @@ jobs:
       - name: Push to GHCR
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/algenord-backend:latest
+          docker push ghcr.io/${{ steps.repo.outputs.owner_lc }}/algenord-backend:latest
 
 
 # ============================================================================
@@ -120,4 +130,12 @@ jobs:
 #   Pusher til GHCR med :latest tag
 #   → Kun verified, testet kode når produktion
 #
+# ============================================================================
+# GHCR IMAGE LOCATION
+# ============================================================================
+# Image vil være tilgængelig på:
+# ghcr.io/teamornops/algenord-backend:latest
+#
+# Bemærk: Organization navn konverteres automatisk til lowercase
+# TeamOrnOps → teamornops (GHCR krav)
 # ============================================================================
