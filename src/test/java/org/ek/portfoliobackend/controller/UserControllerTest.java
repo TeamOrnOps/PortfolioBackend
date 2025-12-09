@@ -1,5 +1,9 @@
 package org.ek.portfoliobackend.controller;
 
+import org.ek.portfoliobackend.security.JwtAuthenticationFilter;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+
+
 import tools.jackson.databind.ObjectMapper;
 import org.ek.portfoliobackend.dto.request.CreateUserRequest;
 import org.ek.portfoliobackend.dto.request.UpdateUserRequest;
@@ -22,6 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
+@AutoConfigureMockMvc(addFilters = false)
+
 class UserControllerTest {
 
     @Autowired
@@ -32,6 +38,10 @@ class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
 
     @Test
     void createUser_shouldReturn201() throws Exception {

@@ -16,7 +16,7 @@ import java.util.Date;
 @Component
 public class JwtTokenGenerator {
 
-    @Value("${JWT_SECRET}") // Used for the server to sign and validate tokens
+    @Value("${jwt.secret}")// Used for the server to sign and validate tokens
     private String secret;
 
 

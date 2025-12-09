@@ -3,7 +3,14 @@ package org.ek.portfoliobackend.controller;
 import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
 import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
 import org.ek.portfoliobackend.exception.GlobalExceptionHandler;
+
+import org.ek.portfoliobackend.security.JwtAuthenticationFilter;
+
+
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+
+
 import tools.jackson.databind.ObjectMapper;
 import org.ek.portfoliobackend.dto.request.CreateProjectRequest;
 import org.ek.portfoliobackend.dto.request.ImageUploadRequest;
@@ -39,8 +46,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Integration tests for ProjectController endpoints.
  * Tests the REST API layer for project creation with multipart file uploads.
  */
-@WebMvcTest(controllers = ProjectController.class)
-@Import(GlobalExceptionHandler.class)
+@WebMvcTest(ProjectController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import({GlobalExceptionHandler.class})
 class ProjectControllerTest {
 
     @Autowired
@@ -52,6 +60,8 @@ class ProjectControllerTest {
     @MockitoBean
     private ProjectService projectService;
 
+    @MockitoBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private CreateProjectRequest validRequest;
     private MockMultipartFile beforeImage;
@@ -194,6 +204,7 @@ class ProjectControllerTest {
         // Assert
         verify(projectService).getProjectsByFilters(null, null, "asc");
     }
+
 
     @Test
     @DisplayName("POST /api/projects - Success with valid data")
