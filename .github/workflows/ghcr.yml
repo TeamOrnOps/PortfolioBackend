@@ -3,9 +3,13 @@ name: Build and Push to GHCR
 # ============================================================================
 # ALGENORD - BUILD AND PUSH TO GHCR (GitHub Container Registry)
 # ============================================================================
-# BRANCH STRATEGI (SIMPEL):
-# - Feature branches → development (PR): Bygger og tester
-# - Development → main (merged): Bygger, tester OG pusher til GHCR
+# STRATEGI:
+# - Java CI workflow håndterer Maven build + unit tests
+# - Denne workflow håndterer Docker build + integration tests + GHCR push
+#
+# BRANCH ADFÆRD:
+# - PRs: Bygger Docker image og kører integration tests (pusher IKKE)
+# - Main push: Bygger, tester OG pusher til GHCR
 # ============================================================================
 
 on:
@@ -27,7 +31,7 @@ permissions:
   packages: write
 
 jobs:
-  build-and-push:
+  docker-build-test-push:
     runs-on: ubuntu-latest
 
     steps:
@@ -38,9 +42,8 @@ jobs:
         uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
 
       # ========================================================================
-      # FIX: Konverter repository_owner til lowercase
-      # GitHub Actions konverterer IKKE automatisk til lowercase!
-      # TeamOrnOps → teamornops
+      # FIX: Konverter repository_owner til lowercase for GHCR
+      # TeamOrnOps → teamornops (GHCR kræver lowercase)
       # ========================================================================
       - name: Set lowercase repository owner
         id: repo
@@ -62,8 +65,64 @@ jobs:
           SPRING_JPA_DDL_AUTO=create-drop
           EOF
 
+      - name: Create CI compose file
+        run: |
+          cat > compose.ci.yaml << 'EOF'
+          services:
+            database:
+              image: mysql:8.0
+              container_name: algenord-database-ci
+              restart: unless-stopped
+              environment:
+                MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+                MYSQL_DATABASE: ${MYSQL_DATABASE}
+                MYSQL_USER: ${MYSQL_USER}
+                MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+              volumes:
+                - mysql-data:/var/lib/mysql
+              ports:
+                - "127.0.0.1:3306:3306"
+              healthcheck:
+                test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                start_period: 30s
+              networks:
+                - algenord-network
+          
+            backend:
+              image: ghcr.io/${{ steps.repo.outputs.owner_lc }}/algenord-backend:latest
+              container_name: algenord-backend-ci
+              restart: unless-stopped
+              depends_on:
+                database:
+                  condition: service_healthy
+              environment:
+                SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+                SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/${MYSQL_DATABASE}
+                SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+                SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+                SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_DDL_AUTO}
+                SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQLDialect
+              ports:
+                - "127.0.0.1:8080:8080"
+              volumes:
+                - ./uploads:/app/uploads
+              networks:
+                - algenord-network
+          
+          networks:
+            algenord-network:
+              driver: bridge
+          
+          volumes:
+            mysql-data:
+              driver: local
+          EOF
+
       - name: Start containers
-        run: docker compose up -d
+        run: docker compose -f compose.ci.yaml up -d
 
       - name: Wait for services
         run: sleep 40
@@ -75,9 +134,9 @@ jobs:
           if [ "$HTTP_STATUS" != "200" ]; then
             echo "Health check failed with status: $HTTP_STATUS"
             echo "=== Backend logs ==="
-            docker compose logs backend
+            docker compose -f compose.ci.yaml logs backend
             echo "=== Database logs ==="
-            docker compose logs database
+            docker compose -f compose.ci.yaml logs database
             exit 1
           fi
           
@@ -88,7 +147,7 @@ jobs:
       - name: Stop and remove containers
         if: always()
         run: |
-          docker compose down -v
+          docker compose -f compose.ci.yaml down -v
           docker system prune -f
 
       # Pusher KUN til GHCR når kode når main branch
@@ -107,28 +166,23 @@ jobs:
 
 
 # ============================================================================
-# BRANCH WORKFLOW OVERSIGT
+# WORKFLOW OVERSIGT
 # ============================================================================
 #
 # Feature branch → Development (PR):
-#   Bygger image
-#   Kører integrationstest
-#   Pusher IKKE til GHCR
-#   → Giver tidlig feedback om koden virker
-#
-# Feature branch → Development (merged):
-#   Ingen workflow (venter til main)
+#   Java CI: Maven build + unit tests
+#   GHCR: Docker build + integration test
+#   Push IKKE til GHCR
 #
 # Development → Main (PR):
-#   Bygger image
-#   Kører integrationstest
-#   Pusher IKKE til GHCR
+#   Java CI: Maven build + unit tests
+#   GHCR: Docker build + integration test
+#   Push IKKE til GHCR
 #
 # Development → Main (merged):
-#   Bygger image
-#   Kører integrationstest
-#   Pusher til GHCR med :latest tag
-#   → Kun verified, testet kode når produktion
+#   Java CI: Maven build + unit tests
+#   GHCR: Docker build + integration test
+#   Push til GHCR med :latest tag
 #
 # ============================================================================
 # GHCR IMAGE LOCATION
@@ -136,6 +190,6 @@ jobs:
 # Image vil være tilgængelig på:
 # ghcr.io/teamornops/algenord-backend:latest
 #
-# Bemærk: Organization navn konverteres automatisk til lowercase
-# TeamOrnOps → teamornops (GHCR krav)
+# Pull fra server:
+# docker pull ghcr.io/teamornops/algenord-backend:latest
 # ============================================================================
