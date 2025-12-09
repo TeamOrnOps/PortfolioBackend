@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -75,6 +76,7 @@ public class ProjectController {
      * @param imageMetadata Metadata for each image (imageType, isFeatured)
      * @return ResponseEntity with the created project and HTTP 201 status
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<ProjectResponse> createProject(
             @RequestPart("data") CreateProjectRequest request,
@@ -113,6 +115,7 @@ public class ProjectController {
      * * @throws ResourceNotFoundException if project with given ID does not exist
      * @throws IllegalArgumentException with BAD_REQUEST if validation fails
      * */
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping(value = "/{id}/images", consumes = "multipart/form-data")
     public ResponseEntity<ProjectResponse> uploadProjectImages(
             @PathVariable Long id,
@@ -147,6 +150,8 @@ public class ProjectController {
      * @return ResponseEntity with the updated project and HTTP 200 status
      * @throws ResourceNotFoundException if project or image not found
      * */
+
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{projectId}/images/{imageId}")
     public ResponseEntity<ProjectResponse> updateImageMetadata(@PathVariable Long projectId,
                                                        @PathVariable Long imageId,
@@ -160,6 +165,7 @@ public class ProjectController {
     }
 
     // Updates an existing project's details
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ProjectResponse> updateProject(@PathVariable Long id,
                                                         @Valid @RequestBody UpdateProjectRequest request) {
@@ -173,6 +179,7 @@ public class ProjectController {
     }
 
     // Deletes an image from a project by image ID
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{projectId}/images/{imageId}")
     public ResponseEntity<ProjectResponse> deleteImage(@PathVariable Long projectId,
                                                    @PathVariable Long imageId) {
@@ -185,6 +192,7 @@ public class ProjectController {
     }
 
     // Deletes project and all associated images
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
         log.info("Received request to delete project with ID: {}", id);

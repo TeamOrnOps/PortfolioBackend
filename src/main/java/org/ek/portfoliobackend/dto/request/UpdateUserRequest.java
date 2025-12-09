@@ -14,18 +14,16 @@ public class UpdateUserRequest {
     @Size(min = 6, message = "Password must be at least 6 characters long")
     private String password;
 
-    private String role; // e.g., "ROLE_ADMIN", "ROLE_SALES"
 
     //no-args constructor
     public UpdateUserRequest() {
     }
 
     //all-args constructor
-    public UpdateUserRequest(String username, String email, String password, String role) {
+    public UpdateUserRequest(String username, String email, String password) {
         this.username = username;
         this.email = email;
         this.password = password;
-        this.role = role;
     }
 
     public String getUsername() {
@@ -52,11 +50,5 @@ public class UpdateUserRequest {
         this.password = password;
     }
 
-    public String getRole() {
-        return role;
-    }
 
-    public void setRole(String role) {
-        this.role = role;
-    }
 }

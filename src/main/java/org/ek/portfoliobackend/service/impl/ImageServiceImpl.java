@@ -21,7 +21,6 @@ public class ImageServiceImpl implements ImageService {
         this.projectRepository = projectRepository;
     }
 
-    // TODO alt dette ligger i ProjectServiceImpl lige nu, kh Sofie
 
     @Override
     public ImageResponse uploadImage(Long projectId, String url, ImageUploadRequest request) {

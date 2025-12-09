@@ -18,19 +18,15 @@ public class CreateUserRequest {
     @Size(min = 6, message = "Password must be at least 6 characters long")
     private String password;
 
-    @NotBlank(message = "Role is required")
-    private String role; // e.g., "ROLE_ADMIN", "ROLE_SALES"
-
     //no-args constructor
     public CreateUserRequest() {
     }
 
     //all-args constructor
-    public CreateUserRequest(String username, String email, String password, String role) {
+    public CreateUserRequest(String username, String email, String password) {
         this.username = username;
         this.email = email;
         this.password = password;
-        this.role = role;
     }
 
     public String getUsername() {
@@ -57,11 +53,5 @@ public class CreateUserRequest {
         this.password = password;
     }
 
-    public String getRole() {
-        return role;
-    }
 
-    public void setRole(String role) {
-        this.role = role;
-    }
 }

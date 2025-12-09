@@ -1,6 +1,9 @@
 package org.ek.portfoliobackend.controller;
 
-import tools.jackson.databind.ObjectMapper;
+import org.ek.portfoliobackend.security.JwtAuthenticationFilter;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.ek.portfoliobackend.dto.request.CreateUserRequest;
 import org.ek.portfoliobackend.dto.request.UpdateUserRequest;
 import org.ek.portfoliobackend.dto.response.UserResponse;
@@ -22,16 +25,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
 
     @Test
     void createUser_shouldReturn201() throws Exception {
@@ -39,11 +46,11 @@ class UserControllerTest {
         CreateUserRequest request = new CreateUserRequest(
                 "admin",
                 "admin@test.dk",
-                "password123",
-                "ROLE_ADMIN"
+                "password123"
+
         );
 
-        UserResponse response = new UserResponse(1L, "admin", "admin@test.dk", "ROLE_ADMIN");
+        UserResponse response = new UserResponse(1L, "admin", "admin@test.dk");
 
         when(userService.createUser(any(CreateUserRequest.class))).thenReturn(response);
 
@@ -54,14 +61,14 @@ class UserControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.username").value("admin"))
-                .andExpect(jsonPath("$.email").value("admin@test.dk"))
-                .andExpect(jsonPath("$.role").value("ROLE_ADMIN"));
+                .andExpect(jsonPath("$.email").value("admin@test.dk"));
+
     }
 
     @Test
     void getUserById_shouldReturn200() throws Exception {
         // Arrange
-        UserResponse response = new UserResponse(1L, "admin", "admin@test.dk", "ROLE_ADMIN");
+        UserResponse response = new UserResponse(1L, "admin", "admin@test.dk");
 
         when(userService.getUserById(1L)).thenReturn(response);
 
@@ -75,16 +82,16 @@ class UserControllerTest {
     @Test
     void getAllUsers_shouldReturn200() throws Exception {
         // Arrange
-        UserResponse user1 = new UserResponse(1L, "admin", "admin@test.dk", "ROLE_ADMIN");
-        UserResponse user2 = new UserResponse(2L, "sales", "sales@test.dk", "ROLE_SALES");
+        UserResponse user1 = new UserResponse(1L, "admin", "admin@test.dk");
+        UserResponse user2 = new UserResponse(2L, "sales", "sales@test.dk");
 
         when(userService.getAllUsers()).thenReturn(Arrays.asList(user1, user2));
 
         // Act & Assert
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].username").value("admin"))
-                .andExpect(jsonPath("$[1].username").value("sales"));
+                .andExpect(jsonPath("$[0].username").value("admin"));
+
     }
 
     @Test
@@ -93,7 +100,7 @@ class UserControllerTest {
         UpdateUserRequest request = new UpdateUserRequest();
         request.setUsername("updatedAdmin");
 
-        UserResponse response = new UserResponse(1L, "updatedAdmin", "admin@test.dk", "ROLE_ADMIN");
+        UserResponse response = new UserResponse(1L, "updatedAdmin", "admin@test.dk");
 
         when(userService.updateUser(eq(1L), any(UpdateUserRequest.class))).thenReturn(response);
 

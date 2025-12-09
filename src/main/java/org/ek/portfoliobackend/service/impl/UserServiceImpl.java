@@ -37,7 +37,6 @@ public class UserServiceImpl implements UserService {
     user.setUsername(request.getUsername());
     user.setEmail(request.getEmail());
     user.setPassword(passwordEncoder.encode(request.getPassword()));
-    user.setRole(request.getRole());
 
     User savedUser = userRepository.save(user);
     return mapToResponse(savedUser);
@@ -83,10 +82,7 @@ public class UserServiceImpl implements UserService {
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
-        // role
-        if (request.getRole() != null && !request.getRole().isEmpty()) {
-            user.setRole(request.getRole());
-        }
+
         // save updated user
         User updatedUser = userRepository.save(user);
         return mapToResponse(updatedUser);
@@ -104,8 +100,6 @@ public class UserServiceImpl implements UserService {
         return new UserResponse(
                 user.getId(),
                 user.getUsername(),
-                user.getEmail(),
-                user.getRole()
-        );
+                user.getEmail());
     }
 }

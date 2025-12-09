@@ -42,7 +42,7 @@ public class UserServiceImplTest {
         // Arrange
         CreateUserRequest request = new CreateUserRequest(
                 "Jens64", "admin@test.io",
-                "Hansen2024", "ROLE_ADMIN"
+                "Hansen2024"
         );
 
         User savedUser = new User();
@@ -50,7 +50,7 @@ public class UserServiceImplTest {
         savedUser.setUsername("Jens64");
         savedUser.setEmail("admin@test.io");
         savedUser.setPassword("hashedPassword");
-        savedUser.setRole("ROLE_ADMIN");
+
 
         when(userRepository.existsByUsername(request.getUsername())).thenReturn(false);
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
@@ -63,7 +63,6 @@ public class UserServiceImplTest {
         assertThat(response).isNotNull();
         assertThat(response.getUsername()).isEqualTo("Jens64");
         assertThat(response.getEmail()).isEqualTo("admin@test.io");
-        assertThat(response.getRole()).isEqualTo("ROLE_ADMIN");
         verify(userRepository).save(any(User.class));
     }
 
@@ -73,7 +72,7 @@ public class UserServiceImplTest {
         // Arrange
         CreateUserRequest request = new CreateUserRequest(
                 "Jens64", "jensen@pizzabar.dk",
-                "Hansen2024", "ROLE_ADMIN"
+                "Hansen2024"
         );
 
         when(userRepository.existsByUsername(request.getUsername())).thenReturn(true);
@@ -92,7 +91,7 @@ public class UserServiceImplTest {
         // Arrange
         CreateUserRequest request = new CreateUserRequest(
                 "Jens64", "jensen@pizzabar.dk",
-                "Hansen2024", "ROLE_ADMIN"
+                "Hansen2024"
         );
 
         when(userRepository.existsByUsername(request.getUsername())).thenReturn(false);
@@ -114,7 +113,6 @@ public class UserServiceImplTest {
         user.setId(1L);
         user.setUsername("Jens64");
         user.setEmail("hansens@bandeland.dk");
-        user.setRole("ROLE_ADMIN");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
@@ -147,13 +145,11 @@ public class UserServiceImplTest {
         user1.setId(1L);
         user1.setUsername("Jens64");
         user1.setEmail("email@admin.io");
-        user1.setRole("ROLE_ADMIN");
 
         User user2 = new User();
         user2.setId(2L);
         user2.setUsername("Anna88");
         user2.setEmail("annas@email.dk");
-        user2.setRole("ROLE_SALES");
 
         when(userRepository.findAll()).thenReturn(Arrays.asList(user1, user2));
 
@@ -175,7 +171,6 @@ public class UserServiceImplTest {
         existingUser.setUsername("OldName");
         existingUser.setEmail("old@email.io");
         existingUser.setPassword("hashedPassword");
-        existingUser.setRole("ROLE_ADMIN");
 
         UpdateUserRequest request = new UpdateUserRequest();
         request.setUsername("NewName");
