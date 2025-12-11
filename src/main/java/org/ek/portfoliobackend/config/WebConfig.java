@@ -45,7 +45,7 @@ public class WebConfig implements WebMvcConfigurer {
         // Mapper URL path "/uploads/**" til den fysiske mappe defineret i uploadDir
         // ** betyder "alle undermapper og filer"
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + uploadDir);
+                .addResourceLocations("file:" + uploadDir + "/");
 
         // Mapper URL path "/static/**" til den fysiske static mappe
         registry.addResourceHandler("/static/**")
