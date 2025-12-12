@@ -404,9 +404,9 @@ public class ProjectServiceImpl implements ProjectService {
     // --- Helper for sort by date ---
     private Sort sortByDate(String sortDirection) {
         if (sortDirection != null && sortDirection.equalsIgnoreCase("asc")) {
-            return Sort.by(Sort.Direction.ASC, "executionDate");
+            return Sort.by(Sort.Direction.ASC, "creationDate");
         }
-        return Sort.by(Sort.Direction.DESC, "executionDate");
+        return Sort.by(Sort.Direction.DESC, "creationDate");
     }
 
     // --- Helper for mapping of project list ---

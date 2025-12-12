@@ -534,7 +534,7 @@ TDD test for old update image method
 
     // Sort projects default in descending order
     @Test
-    @DisplayName("getAllProjectsOrderedByDate should default to descending sort when sortDirection is null")
+    @DisplayName(" should default to descending sort when sortDirection is null")
     void shouldSortDescendingByDefault() {
 
         // Arrange
