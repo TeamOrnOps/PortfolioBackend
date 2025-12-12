@@ -41,6 +41,7 @@ public class LocalFileStorageServiceImpl implements ImageStorageService {
         }
     }
 
+
     /**
      * Gemmer en uploaded fil til filsystemet med et unikt UUID-baseret filnavn.
      * Filens originale extension bevares.

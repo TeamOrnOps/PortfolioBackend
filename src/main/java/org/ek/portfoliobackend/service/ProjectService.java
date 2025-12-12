@@ -1,9 +1,7 @@
 package org.ek.portfoliobackend.service;
 
-import org.ek.portfoliobackend.dto.request.CreateProjectRequest;
-import org.ek.portfoliobackend.dto.request.ImageUploadRequest;
-import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
-import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
+import org.ek.portfoliobackend.dto.request.*;
+import org.ek.portfoliobackend.dto.response.ImageResponse;
 import org.ek.portfoliobackend.dto.response.ProjectResponse;
 import org.ek.portfoliobackend.model.CustomerType;
 import org.ek.portfoliobackend.model.WorkType;
@@ -24,6 +22,8 @@ public interface ProjectService {
     ProjectResponse updateProject(Long id, UpdateProjectRequest request);
 
    // ImageResponse updateImage(Long imageId, UpdateImageRequest request);
+
+    public ImageResponse updateImageUrl(Long projectId, Long imageId, UpdateImageUrlRequest request);
 
     //get project by id
     ProjectResponse getProjectById(Long id);

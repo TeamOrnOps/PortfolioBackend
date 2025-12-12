@@ -1,14 +1,13 @@
 package org.ek.portfoliobackend.controller;
 
 import jakarta.validation.Valid;
-import org.ek.portfoliobackend.dto.request.CreateProjectRequest;
-import org.ek.portfoliobackend.dto.request.ImageUploadRequest;
-import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
-import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
+import org.ek.portfoliobackend.dto.request.*;
+import org.ek.portfoliobackend.dto.response.ImageResponse;
 import org.ek.portfoliobackend.dto.response.ProjectResponse;
 import org.ek.portfoliobackend.exception.custom.ResourceNotFoundException;
 import org.ek.portfoliobackend.model.CustomerType;
 import org.ek.portfoliobackend.model.WorkType;
+import org.ek.portfoliobackend.service.ImageStorageService;
 import org.ek.portfoliobackend.service.ProjectService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * REST Controller for handling project-related HTTP requests.
@@ -32,9 +32,11 @@ import java.util.List;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final ImageStorageService imageStorageService;
 
-    public ProjectController(ProjectService projectService) {
+    public ProjectController(ProjectService projectService, ImageStorageService imageStorageService) {
         this.projectService = projectService;
+        this.imageStorageService = imageStorageService;
     }
 
 
@@ -164,6 +166,24 @@ public class ProjectController {
         return ResponseEntity.ok(updatedProject);
     }
 
+    @PutMapping("/{projectId}/images/{imageId}/url")
+    public ImageResponse updateImageUrl(
+            @PathVariable Long projectId,
+            @PathVariable Long imageId,
+            @RequestBody @Valid UpdateImageUrlRequest request) {
+
+        return projectService.updateImageUrl(projectId, imageId, request);
+    }
+
+    @PostMapping("/upload")
+    public Map<String, String> uploadImage(
+            @RequestParam("file") MultipartFile file) {
+
+        String url = imageStorageService.store(file);
+        return Map.of("url", url);
+    }
+
+
     // Updates an existing project's details
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
@@ -202,4 +222,6 @@ public class ProjectController {
         log.info("Successfully deleted project with ID: {}", id);
         return ResponseEntity.noContent().build();
     }
+
+
 }

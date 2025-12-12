@@ -1,9 +1,6 @@
 package org.ek.portfoliobackend.service.impl;
 
-import org.ek.portfoliobackend.dto.request.CreateProjectRequest;
-import org.ek.portfoliobackend.dto.request.ImageUploadRequest;
-import org.ek.portfoliobackend.dto.request.UpdateImageRequest;
-import org.ek.portfoliobackend.dto.request.UpdateProjectRequest;
+import org.ek.portfoliobackend.dto.request.*;
 import org.ek.portfoliobackend.dto.response.ImageResponse;
 import org.ek.portfoliobackend.dto.response.ProjectResponse;
 import org.ek.portfoliobackend.mapper.ProjectMapper;
@@ -238,6 +235,41 @@ public class ProjectServiceImpl implements ProjectService {
         // Return updated project
         return projectMapper.toResponse(project);
     }
+    @Override
+    @Transactional
+    public ImageResponse updateImageUrl(
+            Long projectId,
+            Long imageId,
+            UpdateImageUrlRequest request) {
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
+
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Image", imageId));
+
+        if (!image.getProject().getId().equals(projectId)) {
+            throw new IllegalArgumentException("Image does not belong to project");
+        }
+
+        String newUrl = request.getUrl();
+
+        if (newUrl.equals(image.getUrl())) {
+            return projectMapper.toImageResponse(image);
+        }
+
+        // Slet gammel fil
+        imageStorageService.delete(image.getUrl());
+
+        // Opdatér URL
+        image.setUrl(newUrl);
+
+        imageRepository.save(image);
+
+        return projectMapper.toImageResponse(image);
+    }
+
+
 
     @Override
     @Transactional
@@ -442,8 +474,6 @@ public class ProjectServiceImpl implements ProjectService {
 
 
     // ==== FILTRERINGSLOGIK ===
-
-    // TODO: Implementer metoder
 
     @Override
     public List<ProjectResponse> getProjectsByWorkType(WorkType workType) {
