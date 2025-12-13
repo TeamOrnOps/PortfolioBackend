@@ -526,7 +526,7 @@ TDD test for old update image method
         verify(projectRepository).findAll(sortCaptor.capture());
 
         Sort usedSort = sortCaptor.getValue();
-        Sort.Order order = usedSort.getOrderFor("creationDate");
+        Sort.Order order = usedSort.getOrderFor("executionDate");
 
         assertNotNull(order);
         assertEquals(Sort.Direction.ASC, order.getDirection());
@@ -552,7 +552,7 @@ TDD test for old update image method
         verify(projectRepository).findAll(sortCaptor.capture());
 
         Sort usedSort = sortCaptor.getValue();
-        Sort.Order order = usedSort.getOrderFor("creationDate");
+        Sort.Order order = usedSort.getOrderFor("executionDate");
 
         assertNotNull(order);
         assertEquals(Sort.Direction.DESC, order.getDirection());
