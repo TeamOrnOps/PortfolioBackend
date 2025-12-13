@@ -71,6 +71,11 @@ public class ProjectServiceImpl implements ProjectService {
                 MultipartFile imageFile = images.get(i);
                 ImageUploadRequest metadata = imageMetadata.get(i);
 
+                //if image is featured, unfeature other images in same workType category
+                if (metadata.isFeatured()) {
+                    unfeatureImageByWorkType(project.getWorkType());
+                }
+
                 // Store the image file and get the URL
                 String imageUrl = imageStorageService.store(imageFile);
 
@@ -179,6 +184,11 @@ public class ProjectServiceImpl implements ProjectService {
                 MultipartFile imageFile = images.get(i);
                 ImageUploadRequest metadata = imageMetadata.get(i);
 
+                //if image is featured, unfeature other images in same workType category
+                if (metadata.isFeatured()) {
+                    unfeatureImageByWorkType(project.getWorkType());
+                }
+
                 // Store the image file and get the URL
                 String imageUrl = imageStorageService.store(imageFile);
 
@@ -231,6 +241,12 @@ public class ProjectServiceImpl implements ProjectService {
 
         // Update image metadata using mapper
         projectMapper.updateImageEntity(request, image);
+
+        // If setting this image as featured, unfeature others in same workType category
+        if (image.getIsFeatured()) {
+            unfeatureImageByWorkType(project.getWorkType());
+            image.setIsFeatured(true); // Re-set this one to featured after unfeaturing others
+        }
 
         // Save updated image
         imageRepository.save(image);
@@ -403,13 +419,26 @@ public class ProjectServiceImpl implements ProjectService {
 
     // --- Helper for sort by date ---
     private Sort sortByDate(String sortDirection) {
-
         if (sortDirection != null && sortDirection.equalsIgnoreCase("asc")) {
-            return Sort.by(Sort.Direction.ASC, "creationDate");
+            return Sort.by(Sort.Direction.ASC, "executionDate");
         }
+        return Sort.by(Sort.Direction.DESC, "executionDate");
+    }
 
-        // Default sort is the latest project first
-        return Sort.by(Sort.Direction.DESC, "creationDate");
+    // unfeatures all images from projects with given workType
+    // only one featured image per workType category
+    private void unfeatureImageByWorkType(WorkType workType) {
+        // find all projects with the given workType
+        List<Project> projects = projectRepository.findByWorkType(workType, Sort.unsorted());
+        // unfeature all images in these projects
+        for (Project project : projects) {
+            for (Image image : project.getImages()) {
+                if (image.getIsFeatured()) {
+                    image.setIsFeatured(false);
+                    imageRepository.save(image);
+                }
+            }
+        }
     }
 
     // --- Helper for mapping of project list ---

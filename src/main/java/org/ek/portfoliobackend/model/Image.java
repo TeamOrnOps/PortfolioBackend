@@ -14,6 +14,7 @@ public class Image {
     private String url;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = true) // allow null for featured images
     private ImageType imageType;
 
     private boolean isFeatured;

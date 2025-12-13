@@ -153,6 +153,10 @@ class ProjectServiceImplTest {
         // Arrange
         when(projectMapper.toProjectEntity(validRequest)).thenReturn(mockProject);
         when(projectRepository.save(any(Project.class))).thenReturn(mockProject);
+
+        when(projectRepository.findByWorkType(eq(WorkType.FACADE_CLEANING), any(Sort.class)))
+                .thenReturn(Collections.emptyList());
+
         when(imageStorageService.store(any(MultipartFile.class)))
                 .thenReturn("http://storage.com/before.jpg")
                 .thenReturn("http://storage.com/after.jpg");
@@ -283,6 +287,10 @@ class ProjectServiceImplTest {
         // Arrange
         when(projectMapper.toProjectEntity(validRequest)).thenReturn(mockProject);
         when(projectRepository.save(any(Project.class))).thenReturn(mockProject);
+
+        when(projectRepository.findByWorkType(eq(WorkType.FACADE_CLEANING), any(Sort.class)))
+                .thenReturn(Collections.emptyList());
+
         when(imageStorageService.store(any(MultipartFile.class)))
                 .thenReturn("http://storage.com/before.jpg")
                 .thenThrow(new RuntimeException("Storage failure"));
@@ -526,7 +534,7 @@ TDD test for old update image method
         verify(projectRepository).findAll(sortCaptor.capture());
 
         Sort usedSort = sortCaptor.getValue();
-        Sort.Order order = usedSort.getOrderFor("creationDate");
+        Sort.Order order = usedSort.getOrderFor("executionDate");
 
         assertNotNull(order);
         assertEquals(Sort.Direction.ASC, order.getDirection());
@@ -534,7 +542,7 @@ TDD test for old update image method
 
     // Sort projects default in descending order
     @Test
-    @DisplayName("getAllProjectsOrderedByDate should default to descending sort when sortDirection is null")
+    @DisplayName(" should default to descending sort when sortDirection is null")
     void shouldSortDescendingByDefault() {
 
         // Arrange
@@ -552,7 +560,7 @@ TDD test for old update image method
         verify(projectRepository).findAll(sortCaptor.capture());
 
         Sort usedSort = sortCaptor.getValue();
-        Sort.Order order = usedSort.getOrderFor("creationDate");
+        Sort.Order order = usedSort.getOrderFor("executionDate");
 
         assertNotNull(order);
         assertEquals(Sort.Direction.DESC, order.getDirection());
