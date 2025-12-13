@@ -153,6 +153,10 @@ class ProjectServiceImplTest {
         // Arrange
         when(projectMapper.toProjectEntity(validRequest)).thenReturn(mockProject);
         when(projectRepository.save(any(Project.class))).thenReturn(mockProject);
+
+        when(projectRepository.findByWorkType(eq(WorkType.FACADE_CLEANING), any(Sort.class)))
+                .thenReturn(Collections.emptyList());
+
         when(imageStorageService.store(any(MultipartFile.class)))
                 .thenReturn("http://storage.com/before.jpg")
                 .thenReturn("http://storage.com/after.jpg");
@@ -283,6 +287,10 @@ class ProjectServiceImplTest {
         // Arrange
         when(projectMapper.toProjectEntity(validRequest)).thenReturn(mockProject);
         when(projectRepository.save(any(Project.class))).thenReturn(mockProject);
+
+        when(projectRepository.findByWorkType(eq(WorkType.FACADE_CLEANING), any(Sort.class)))
+                .thenReturn(Collections.emptyList());
+
         when(imageStorageService.store(any(MultipartFile.class)))
                 .thenReturn("http://storage.com/before.jpg")
                 .thenThrow(new RuntimeException("Storage failure"));
