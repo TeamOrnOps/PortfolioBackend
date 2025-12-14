@@ -161,6 +161,10 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_DDL_AUTO}
       SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQLDialect
 
+      # Image URL configuration
+      # Dette gør at billederne der uploades får den korrekte baseurl
+      # TODO: APP_BASE_URL: https://yourdomain.com
+
     # ports: Eksponér backend API til host maskinen.
     # Formatet er "host_port:container_port"
     # Backend bliver tilgængelig på http://localhost:8080
