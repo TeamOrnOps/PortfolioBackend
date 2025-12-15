@@ -85,8 +85,8 @@ public class LocalFileStorageServiceImpl implements ImageStorageService {
             // Kopiér fil til destination
             Files.copy(file.getInputStream(), destinationFile, StandardCopyOption.REPLACE_EXISTING);
 
-            // Returnér den relative URL/sti
-            return baseUrl + "/uploads/" + filename;
+            // Returnér den relative URL/sti (uden baseUrl, så den virker med reverse proxy)
+            return "/uploads/" + filename;
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file: " + file.getOriginalFilename(), e);

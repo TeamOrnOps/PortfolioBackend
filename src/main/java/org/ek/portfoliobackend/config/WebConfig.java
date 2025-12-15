@@ -56,11 +56,13 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(
-                        "http://localhost",          // Frontend nginx (port 80)
+                        "http://localhost",          // Frontend udvikling
                         "http://localhost:63342",
                         "http://localhost:8000",
                         "http://localhost:3000",
-                        "http://127.0.0.1:63342"
+                        "http://127.0.0.1:63342",
+                        "https://algenordportfolio.dk",     // Frontend produktion
+                        "https://www.algenordportfolio.dk"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH")
                 .allowedHeaders("*")
