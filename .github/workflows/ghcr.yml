@@ -1,0 +1,195 @@
+name: Build and Push to GHCR
+
+# ============================================================================
+# ALGENORD - BUILD AND PUSH TO GHCR (GitHub Container Registry)
+# ============================================================================
+# STRATEGI:
+# - Java CI workflow håndterer Maven build + unit tests
+# - Denne workflow håndterer Docker build + integration tests + GHCR push
+#
+# BRANCH ADFÆRD:
+# - PRs: Bygger Docker image og kører integration tests (pusher IKKE)
+# - Main push: Bygger, tester OG pusher til GHCR
+# ============================================================================
+
+on:
+  # Push til main: Bygger, tester OG pusher til GHCR
+  push:
+    branches: [main]
+
+  # PRs mod development eller main: Bygger og tester (pusher IKKE)
+  pull_request:
+    branches:
+      - main
+      - development
+
+  # Manuel trigger
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  docker-build-test-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
+
+      # ========================================================================
+      # FIX: Konverter repository_owner til lowercase for GHCR
+      # TeamOrnOps → teamornops (GHCR kræver lowercase)
+      # ========================================================================
+      - name: Set lowercase repository owner
+        id: repo
+        run: |
+          echo "owner_lc=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Build Docker image
+        run: |
+          docker build -t ghcr.io/${{ steps.repo.outputs.owner_lc }}/algenord-backend:latest .
+
+      - name: Create test .env
+        run: |
+          cat > .env << EOF
+          MYSQL_ROOT_PASSWORD=local_dev_password
+          MYSQL_DATABASE=alge_nord_db
+          MYSQL_USER=ornops
+          MYSQL_PASSWORD=local_dev_password
+          SPRING_PROFILES_ACTIVE=dev
+          SPRING_JPA_DDL_AUTO=create-drop
+          EOF
+
+      - name: Create CI compose file
+        run: |
+          cat > compose.ci.yaml << 'EOF'
+          services:
+            database:
+              image: mysql:8.0
+              container_name: algenord-database-ci
+              restart: unless-stopped
+              environment:
+                MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+                MYSQL_DATABASE: ${MYSQL_DATABASE}
+                MYSQL_USER: ${MYSQL_USER}
+                MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+              volumes:
+                - mysql-data:/var/lib/mysql
+              ports:
+                - "127.0.0.1:3306:3306"
+              healthcheck:
+                test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                start_period: 30s
+              networks:
+                - algenord-network
+          
+            backend:
+              image: ghcr.io/${{ steps.repo.outputs.owner_lc }}/algenord-backend:latest
+              container_name: algenord-backend-ci
+              restart: unless-stopped
+              depends_on:
+                database:
+                  condition: service_healthy
+              environment:
+                SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+                SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/${MYSQL_DATABASE}
+                SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+                SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+                SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_DDL_AUTO}
+                SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQLDialect
+              ports:
+                - "127.0.0.1:8080:8080"
+              volumes:
+                - ./uploads:/app/uploads
+              networks:
+                - algenord-network
+          
+          networks:
+            algenord-network:
+              driver: bridge
+          
+          volumes:
+            mysql-data:
+              driver: local
+          EOF
+
+      - name: Start containers
+        run: docker compose -f compose.ci.yaml up -d
+
+      - name: Wait for services
+        run: sleep 40
+
+      - name: Test endpoint
+        run: |
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/projects || echo "000")
+          
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "Health check failed with status: $HTTP_STATUS"
+            echo "=== Backend logs ==="
+            docker compose -f compose.ci.yaml logs backend
+            echo "=== Database logs ==="
+            docker compose -f compose.ci.yaml logs database
+            exit 1
+          fi
+          
+          echo "Health check passed with status: $HTTP_STATUS"
+          echo "=== API Response Preview ==="
+          curl -s http://localhost:8080/api/projects | head -c 500
+
+      - name: Stop and remove containers
+        if: always()
+        run: |
+          docker compose -f compose.ci.yaml down -v
+          docker system prune -f
+
+      # Pusher KUN til GHCR når kode når main branch
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker push ghcr.io/${{ steps.repo.outputs.owner_lc }}/algenord-backend:latest
+
+
+# ============================================================================
+# WORKFLOW OVERSIGT
+# ============================================================================
+#
+# Feature branch → Development (PR):
+#   Java CI: Maven build + unit tests
+#   GHCR: Docker build + integration test
+#   Push IKKE til GHCR
+#
+# Development → Main (PR):
+#   Java CI: Maven build + unit tests
+#   GHCR: Docker build + integration test
+#   Push IKKE til GHCR
+#
+# Development → Main (merged):
+#   Java CI: Maven build + unit tests
+#   GHCR: Docker build + integration test
+#   Push til GHCR med :latest tag
+#
+# ============================================================================
+# GHCR IMAGE LOCATION
+# ============================================================================
+# Image vil være tilgængelig på:
+# ghcr.io/teamornops/algenord-backend:latest
+#
+# Pull fra server:
+# docker pull ghcr.io/teamornops/algenord-backend:latest
+# ============================================================================
