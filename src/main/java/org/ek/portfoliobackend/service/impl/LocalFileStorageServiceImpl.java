@@ -26,14 +26,23 @@ public class LocalFileStorageServiceImpl implements ImageStorageService {
     private final Path uploadPath;
 
     /**
+     * Base URL for serveren, bruges til at generere fulde URL'er til billeder.
+     */
+    private final String baseUrl;
+
+    /**
      * Opretter en ny LocalFileStorageServiceImpl med den angivne upload-mappe.
      * Mappen oprettes automatisk hvis den ikke eksisterer.
      *
      * @param uploadDir stien til upload-mappen (standard: ./uploads)
+     * @param baseUrl base URL for serveren (standard: http://localhost:8080)
      * @throws RuntimeException hvis upload-mappen ikke kan oprettes
      */
-    public LocalFileStorageServiceImpl(@Value("${file.upload-dir:./uploads}") String uploadDir) {
+    public LocalFileStorageServiceImpl(
+            @Value("${file.upload-dir:./uploads}") String uploadDir,
+            @Value("${app.base-url:http://localhost:8080}") String baseUrl) {
         this.uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+        this.baseUrl = baseUrl;
         try {
             Files.createDirectories(this.uploadPath);
         } catch (IOException e) {
@@ -77,7 +86,7 @@ public class LocalFileStorageServiceImpl implements ImageStorageService {
             Files.copy(file.getInputStream(), destinationFile, StandardCopyOption.REPLACE_EXISTING);
 
             // Returnér den relative URL/sti
-            return "/uploads/" + filename;
+            return baseUrl + "/uploads/" + filename;
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file: " + file.getOriginalFilename(), e);

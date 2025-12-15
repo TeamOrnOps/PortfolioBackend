@@ -25,8 +25,8 @@ class LocalFileStorageServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        // Use temporary directory for tests
-        storageService = new LocalFileStorageServiceImpl(tempDir.toString());
+        // Use temporary directory for tests with empty baseUrl for testing
+        storageService = new LocalFileStorageServiceImpl(tempDir.toString(), "");
     }
 
     @AfterEach
@@ -203,7 +203,7 @@ class LocalFileStorageServiceImplTest {
         assertFalse(Files.exists(newDir), "Directory should not exist initially");
 
         // Act
-        LocalFileStorageServiceImpl newService = new LocalFileStorageServiceImpl(newDir.toString());
+        LocalFileStorageServiceImpl newService = new LocalFileStorageServiceImpl(newDir.toString(), "");
 
         // Assert
         assertTrue(Files.exists(newDir), "Directory should be created");

@@ -50,3 +50,6 @@ logs/
 
 ## Frontend folder (seperate repository)
 frontend/
+
+## Image uploads folder
+uploads/*
